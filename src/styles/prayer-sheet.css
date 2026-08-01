@@ -1,1 +1,153 @@
-.prayer-sheet{background:var(--surface);border:1px solid rgb(104 71 47/16%);border-radius:24px;padding:10px 16px calc(16px + var(--safe-bottom));box-shadow:var(--shadow);max-height:46vh;overflow:auto}.sheet-handle{width:42px;height:5px;border-radius:999px;background:#d8d0c7;margin:0 auto 12px}.step-location{margin:0;color:#775834;text-transform:uppercase;letter-spacing:.1em;font-size:.69rem;font-weight:850}.prayer-sheet>h2{margin:4px 0 10px;font-family:Georgia,serif;font-size:clamp(1.55rem,7vw,2.25rem);line-height:1}.mystery-card{margin:10px 0 14px;padding:12px 14px;border-left:4px solid var(--gold);border-radius:10px;background:#f5ead0}.mystery-card p{margin:0;color:#745821;text-transform:uppercase;font-size:.66rem;font-weight:850;letter-spacing:.09em}.mystery-card h3{margin:3px 0 4px;font-family:Georgia,serif;font-size:1.2rem}.mystery-card span{color:#5c4b35;font-size:.9rem;line-height:1.45}.prayer{border-top:1px solid #e4ddd4;padding:12px 0}.prayer:first-child{border-top:0}.prayer-heading{display:flex;justify-content:space-between;gap:12px;align-items:baseline}.prayer h3{margin:0;font-family:Georgia,serif;font-size:1.2rem}.prayer-heading span{font-size:.72rem;color:var(--muted);font-weight:750}.prayer p{white-space:normal;margin:8px 0 0;line-height:1.58;font-family:Georgia,serif;font-size:1rem}.sheet-actions{position:sticky;bottom:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:12px;background:linear-gradient(transparent,var(--surface) 22%)}.sheet-actions button{min-height:44px;border:1px solid #d5ccc2;border-radius:12px;background:#f0ece7;color:var(--ink);font-weight:800;cursor:pointer}.sheet-actions .primary{border-color:var(--wood-dark);background:var(--wood-dark);color:#fff}.sheet-actions button:disabled{opacity:.45;cursor:not-allowed}@media(min-width:760px){.prayer-sheet{max-height:calc(100vh - 48px);position:sticky;top:24px;padding:18px}.sheet-handle{display:none}}
+.prayer-sheet {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  overflow: hidden;
+  padding: 12px 14px calc(12px + var(--safe-bottom));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.prayer-heading-block {
+  min-width: 0;
+}
+
+.step-location {
+  margin: 0;
+  color: var(--brass);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.prayer-heading-block > h2 {
+  margin: 3px 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.35rem, 6vw, 1.85rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.mystery-card {
+  margin: 8px 0 0;
+  padding: 7px 0 7px 10px;
+  border-left: 2px solid var(--brass);
+}
+
+.mystery-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mystery-card h3 {
+  margin: 2px 0 3px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+}
+
+.mystery-card span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.prayer-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.prayer-list {
+  min-width: 0;
+}
+
+.prayer {
+  padding: 9px 0 11px;
+  border-top: 1px solid var(--line);
+}
+
+.prayer:first-child {
+  border-top: 0;
+  padding-top: 2px;
+}
+
+.prayer-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.prayer h3 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+}
+
+.prayer-heading span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 750;
+}
+
+.prayer p {
+  margin: 6px 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.96rem;
+  line-height: 1.52;
+}
+
+.sheet-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.sheet-actions button {
+  min-height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sheet-actions .primary {
+  border-color: var(--wood-dark);
+  background: var(--wood-dark);
+  color: #fff;
+}
+
+.sheet-actions button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+@media (min-width: 760px) {
+  .prayer-sheet {
+    padding: 20px;
+  }
+
+  .prayer-heading-block > h2 {
+    font-size: 1.9rem;
+  }
+
+  .prayer p {
+    font-size: 1rem;
+  }
+}
