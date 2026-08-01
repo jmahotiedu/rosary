@@ -23,15 +23,18 @@ function visualMarkup(bead: BeadGeometry, active: boolean, complete: boolean): s
   const classes = stateClass(active, complete);
 
   if (bead.visualKind === "transition") {
-    return `<rect class="transition-visual${classes}" x="${bead.x - 4}" y="${bead.y - 4}" width="8" height="8" rx="2" transform="rotate(45 ${bead.x} ${bead.y})" />`;
+    return `<rect class="transition-visual${classes}" x="${bead.x - 3.5}" y="${bead.y - 3.5}" width="7" height="7" rx="1.5" transform="rotate(45 ${bead.x} ${bead.y})" />`;
   }
 
   if (bead.visualKind === "medallion") {
-    return `<path class="medallion-visual${classes}" d="M195 410 C213 420 215 438 195 450 C175 438 177 420 195 410 Z" />`;
+    return `<g class="medallion-visual${classes}">
+      <ellipse class="medallion-body" cx="195" cy="285" rx="14" ry="18" />
+      <path class="medallion-mark" d="M195 276 V294 M190 282 H200" />
+    </g>`;
   }
 
   if (bead.visualKind === "cross") {
-    return `<path class="cross-visual${classes}" d="M188 636 H202 V651 H222 V664 H202 V710 H188 V664 H168 V651 H188 Z" />`;
+    return `<path class="cross-visual${classes}" d="M188 455 H202 V468 H219 V480 H202 V516 H188 V480 H171 V468 H188 Z" />`;
   }
 
   return `<circle class="bead-visual${bead.large ? " bead-visual--large" : ""}${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" />`;
@@ -68,7 +71,13 @@ export function renderRosaryMap(currentStepId: string, completed: readonly strin
     })
     .join("");
 
-  return `<section class="rosary-stage" data-rosary-stage aria-label="Interactive wooden Rosary">
+  return `<section
+    class="rosary-stage"
+    data-rosary-stage
+    data-viewbox-width="${VIEWBOX.width}"
+    data-viewbox-height="${VIEWBOX.height}"
+    aria-label="Interactive wooden Rosary"
+  >
     <svg class="rosary-visual" viewBox="0 0 ${VIEWBOX.width} ${VIEWBOX.height}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <defs>
         <radialGradient id="wood-bead" cx="34%" cy="28%" r="72%">
@@ -78,12 +87,12 @@ export function renderRosaryMap(currentStepId: string, completed: readonly strin
           <stop offset="100%" stop-color="#5a341f"/>
         </radialGradient>
         <linearGradient id="wood-dark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#8a5532"/>
-          <stop offset="55%" stop-color="#5d3622"/>
-          <stop offset="100%" stop-color="#3d2418"/>
+          <stop offset="0%" stop-color="#855335"/>
+          <stop offset="55%" stop-color="#5d3825"/>
+          <stop offset="100%" stop-color="#3b2418"/>
         </linearGradient>
       </defs>
-      <g class="rosary-cord">${loopCord}<path d="M195 390 L195 410"/><path d="M195 450 L195 636"/></g>
+      <g class="rosary-cord">${loopCord}<path d="M195 263 L195 267"/><path d="M195 303 L195 455"/></g>
       ${visuals}
     </svg>
     ${targets}
