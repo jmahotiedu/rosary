@@ -43,7 +43,7 @@ test("an active v2 installed client upgrades, reloads, and uses recovery behavio
     await Promise.all((await caches.keys()).map((name) => caches.delete(name)));
 
     const registration = await navigator.serviceWorker.register(
-      "/rosary/test-fixtures/sw-v2.js",
+      "/rosary/sw-v2-fixture.js",
       {
         scope: "/rosary/",
         updateViaCache: "none",
@@ -67,7 +67,7 @@ test("an active v2 installed client upgrades, reloads, and uses recovery behavio
       });
     }
 
-    if (!navigator.serviceWorker.controller?.scriptURL.includes("/test-fixtures/sw-v2.js")) {
+    if (!navigator.serviceWorker.controller?.scriptURL.includes("/sw-v2-fixture.js")) {
       await new Promise<void>((resolve, reject) => {
         const timeout = window.setTimeout(
           () => reject(new Error("v2 worker did not claim the existing client")),
@@ -101,7 +101,7 @@ test("an active v2 installed client upgrades, reloads, and uses recovery behavio
   });
 
   expect(v2Setup).not.toBeNull();
-  expect(v2Setup!.controllerUrl).toMatch(/\/rosary\/test-fixtures\/sw-v2\.js$/);
+  expect(v2Setup!.controllerUrl).toMatch(/\/rosary\/sw-v2-fixture\.js$/);
   expect(v2Setup!.cacheNames).toContain("rosary-v2");
 
   // Load the real app through the active v2 worker. It serves the cached pre-recovery module,
