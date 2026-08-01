@@ -72,7 +72,8 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
     stepId: "opening-glory",
   });
 
-  [484, 522, 560].forEach((y, index) => {
+  const openingHailMaryPositions = [560, 522, 484];
+  openingHailMaryPositions.forEach((y, index) => {
     beads.push({
       x: 195,
       y,
