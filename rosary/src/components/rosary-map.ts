@@ -1,0 +1,6 @@
+import { createRosaryGeometry } from "./rosary-geometry";
+function beadMarkup(stepId:string,x:number,y:number,r:number,hit:number,large:boolean,label:string,active:boolean,complete:boolean):string{return `<button class="bead-target${active?" is-active":""}${complete?" is-complete":""}" data-step-id="${stepId}" aria-label="${label}" aria-pressed="${active}" style="--x:${x};--y:${y};--hit:${hit}"><span class="bead ${large?"bead--large":""}" style="--radius:${r}"></span><span class="sr-only">${label}</span></button>`;}
+export function renderRosaryMap(currentStepId:string,completed:readonly string[]):string{
+ const done=new Set(completed); const beads=createRosaryGeometry();
+ return `<section class="rosary-stage" aria-label="Interactive wooden Rosary"><svg class="rosary-cord" viewBox="0 0 390 720" aria-hidden="true"><ellipse cx="195" cy="225" rx="132" ry="160"/><path d="M195 385 L195 420"/><path d="M195 464 L195 665"/><path class="centerpiece" d="M195 418 C212 431 211 448 195 464 C179 448 178 431 195 418 Z"/><path class="cross" d="M189 624 H201 V645 H224 V657 H201 V704 H189 V657 H166 V645 H189 Z"/></svg>${beads.map((b)=>beadMarkup(b.stepId,b.x,b.y,b.radius,b.hitRadius,b.large,b.stepId.replaceAll("-"," "),currentStepId===b.stepId,done.has(b.stepId))).join("")}</section>`;
+}
