@@ -70,6 +70,19 @@ export function renderRosaryMap(currentStepId: string, completed: readonly strin
 
   return `<section class="rosary-stage" data-rosary-stage aria-label="Interactive wooden Rosary">
     <svg class="rosary-visual" viewBox="0 0 ${VIEWBOX.width} ${VIEWBOX.height}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <defs>
+        <radialGradient id="wood-bead" cx="34%" cy="28%" r="72%">
+          <stop offset="0%" stop-color="#d7a575"/>
+          <stop offset="32%" stop-color="#b77b49"/>
+          <stop offset="70%" stop-color="#8b572f"/>
+          <stop offset="100%" stop-color="#5a341f"/>
+        </radialGradient>
+        <linearGradient id="wood-dark" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#8a5532"/>
+          <stop offset="55%" stop-color="#5d3622"/>
+          <stop offset="100%" stop-color="#3d2418"/>
+        </linearGradient>
+      </defs>
       <g class="rosary-cord">${loopCord}<path d="M195 390 L195 410"/><path d="M195 450 L195 636"/></g>
       ${visuals}
     </svg>
