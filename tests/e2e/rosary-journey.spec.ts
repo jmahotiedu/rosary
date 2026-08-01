@@ -6,27 +6,79 @@ import {
   openFreshRosary,
 } from "./helpers";
 
-test("an accidental jump does not complete skipped prayers and remains recoverable", async ({
-  page,
-}, testInfo) => {
+test("an accidental jump returns to the exact pre-jump prayer", async ({ page }, testInfo) => {
   await openFreshRosary(page);
+
+  await page.getByRole("button", { name: "Next prayer" }).click();
+  await page.getByRole("button", { name: "Next prayer" }).click();
+  await expect(page.getByRole("heading", { name: "Opening Hail Mary 1 of 3" })).toBeVisible();
 
   await clickRosaryStep(page, "decade-5-hail-10");
   await expect(page.getByRole("heading", { name: "Hail Mary 10 of 10" })).toBeVisible();
-  await expect(page.locator(".progress-ring span")).toHaveText("0%");
-  await expect(page.locator(".is-complete")).toHaveCount(0);
-
-  await page.getByRole("button", { name: "Previous" }).click();
-  await expect(page.getByRole("heading", { name: "Hail Mary 9 of 10" })).toBeVisible();
-  await expect(page.locator(".progress-ring span")).toHaveText("0%");
-
-  await clickRosaryStep(page, "decade-5-hail-10");
-  await page.getByRole("button", { name: "Next prayer" }).click();
-  await expect(page.getByRole("heading", { name: "Complete decade 5" })).toBeVisible();
-  await expect(page.locator(".is-complete")).toHaveCount(1);
   await expect(page.locator(".progress-ring span")).not.toHaveText("100%");
 
-  await attachFullPageScreenshot(page, testInfo, "accidental-jump-recovery");
+  await page.getByRole("button", { name: "Previous" }).click();
+  await expect(page.getByRole("heading", { name: "Opening Hail Mary 1 of 3" })).toBeVisible();
+  await expect(page.locator(".is-complete")).toHaveCount(2);
+
+  await attachFullPageScreenshot(page, testInfo, "accidental-jump-exact-recovery");
+});
+
+test("recovery location survives reload", async ({ page }) => {
+  await openFreshRosary(page);
+  await page.getByRole("button", { name: "Next prayer" }).click();
+  await expect(page.getByRole("heading", { name: "Opening Our Father" })).toBeVisible();
+
+  await clickRosaryStep(page, "decade-4-hail-7");
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Hail Mary 7 of 10" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Previous" }).click();
+  await expect(page.getByRole("heading", { name: "Opening Our Father" })).toBeVisible();
+});
+
+test("normal Previous works at multiple sequence positions", async ({ page }) => {
+  await openFreshRosary(page);
+
+  await page.getByRole("button", { name: "Next prayer" }).click();
+  await page.getByRole("button", { name: "Previous" }).click();
+  await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
+
+  for (let index = 0; index < 5; index += 1) {
+    await page.getByRole("button", { name: "Next prayer" }).click();
+  }
+  await expect(page.getByRole("heading", { name: "Before the five decades" })).toBeVisible();
+  await page.getByRole("button", { name: "Previous" }).click();
+  await expect(page.getByRole("heading", { name: "Opening Hail Mary 3 of 3" })).toBeVisible();
+});
+
+test("manual Mystery selection persists after reload", async ({ page }) => {
+  await openFreshRosary(page);
+
+  const selector = page.getByRole("combobox");
+  await selector.selectOption("sorrowful");
+  await expect(selector).toHaveValue("sorrowful");
+
+  await page.reload();
+  await expect(page.getByRole("combobox")).toHaveValue("sorrowful");
+
+  for (let index = 0; index < 5; index += 1) {
+    await page.getByRole("button", { name: "Next prayer" }).click();
+  }
+  await expect(page.getByText("sorrowful mystery 1", { exact: false })).toBeVisible();
+});
+
+test("direct selection of an early bead is non-destructive", async ({ page }) => {
+  await openFreshRosary(page);
+  await page.getByRole("button", { name: "Next prayer" }).click();
+  await page.getByRole("button", { name: "Next prayer" }).click();
+
+  await clickRosaryStep(page, "opening-hail-3");
+  await expect(page.getByRole("heading", { name: "Opening Hail Mary 3 of 3" })).toBeVisible();
+  await expect(page.locator(".is-complete")).toHaveCount(2);
+
+  await page.getByRole("button", { name: "Previous" }).click();
+  await expect(page.getByRole("heading", { name: "Opening Hail Mary 1 of 3" })).toBeVisible();
 });
 
 test("opening Hail Mary highlights follow the physical strand toward the centerpiece", async ({
@@ -62,17 +114,55 @@ test("opening Hail Mary highlights follow the physical strand toward the centerp
   await attachFullPageScreenshot(page, testInfo, "opening-strand-sequence");
 });
 
-test("the rendered Rosary has no stray center ellipse or bead over the crucifix", async ({
+test("the rendered Rosary has no known stray center decoration or crucifix bead", async ({
   page,
 }, testInfo) => {
   await openFreshRosary(page);
 
-  await expect(page.locator(".rosary-visual ellipse")).toHaveCount(0);
+  await expect(page.locator('[data-decoration="center-ellipse"]')).toHaveCount(0);
   await expect(page.locator(".cross-visual")).toHaveCount(1);
   await expect(page.locator('circle[cx="195"][cy="675"]')).toHaveCount(0);
 
   await expectNoHorizontalOverflow(page);
   await attachFullPageScreenshot(page, testInfo, "initial-rosary-render");
+});
+
+test("saved sequential progress restores after reload", async ({ page }) => {
+  await openFreshRosary(page);
+  for (let index = 0; index < 4; index += 1) {
+    await page.getByRole("button", { name: "Next prayer" }).click();
+  }
+  await expect(page.getByRole("heading", { name: "Opening Hail Mary 3 of 3" })).toBeVisible();
+
+  const completedBeforeReload = await page.locator(".is-complete").count();
+  await page.reload();
+
+  await expect(page.getByRole("heading", { name: "Opening Hail Mary 3 of 3" })).toBeVisible();
+  await expect(page.locator(".is-complete")).toHaveCount(completedBeforeReload);
+});
+
+test("the complete journey reaches final prayers and a true completed state", async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(90_000);
+  await openFreshRosary(page);
+
+  for (let step = 0; step < 66; step += 1) {
+    const next = page.getByRole("button", { name: /Next prayer|Finish Rosary/ });
+    await next.click();
+    if (await page.getByRole("button", { name: "Rosary complete" }).isVisible().catch(() => false)) {
+      break;
+    }
+  }
+
+  await expect(page.getByRole("heading", { name: "Conclude the Rosary" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Rosary complete" })).toBeDisabled();
+  await expect(page.locator(".progress-ring span")).toHaveText("100%");
+
+  await page.getByRole("button", { name: "Previous" }).click();
+  await expect(page.getByRole("heading", { name: "Complete decade 5" })).toBeVisible();
+
+  await attachFullPageScreenshot(page, testInfo, "completed-rosary");
 });
 
 test("start over clears completed prayers and returns to the crucifix", async ({ page }) => {
