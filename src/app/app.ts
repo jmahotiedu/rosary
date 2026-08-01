@@ -13,8 +13,8 @@ import type { MysterySetId } from "../domain/prayer-step";
 import { loadState, saveState } from "./persistence";
 import { renderRosaryMap } from "../components/rosary-map";
 import {
+  clientPointToViewBox,
   findNearestRosaryStepId,
-  VIEWBOX,
 } from "../components/rosary-geometry";
 import { renderPrayerSheet } from "../components/prayer-sheet";
 import { renderMysterySelector } from "../components/mystery-selector";
@@ -72,12 +72,12 @@ export function mountApp(root: HTMLElement): void {
     stage?.addEventListener("click", (event) => {
       if (event.target instanceof HTMLButtonElement) return;
 
-      const bounds = stage.getBoundingClientRect();
-      if (bounds.width === 0 || bounds.height === 0) return;
+      const visual = stage.querySelector<SVGSVGElement>(".rosary-visual");
+      const bounds = (visual ?? stage).getBoundingClientRect();
+      const point = clientPointToViewBox(event.clientX, event.clientY, bounds);
+      if (!point) return;
 
-      const x = ((event.clientX - bounds.left) / bounds.width) * VIEWBOX.width;
-      const y = ((event.clientY - bounds.top) / bounds.height) * VIEWBOX.height;
-      const stepId = findNearestRosaryStepId(x, y);
+      const stepId = findNearestRosaryStepId(point.x, point.y);
       if (stepId) applyNavigation(selectStep(navigationState(), stepId));
     });
 
