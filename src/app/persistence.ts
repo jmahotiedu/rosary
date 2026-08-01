@@ -21,6 +21,11 @@ export function loadState(storage: Storage = localStorage): AppState {
       return createInitialState();
     }
 
+    const returnStepId =
+      typeof saved.returnStepId === "string" && STEP_BY_ID.has(saved.returnStepId)
+        ? saved.returnStepId
+        : null;
+
     return {
       ...createInitialState(),
       currentStepId: saved.currentStepId,
@@ -31,6 +36,7 @@ export function loadState(storage: Storage = localStorage): AppState {
           ? saved.completedStepIds.filter((id): id is string => typeof id === "string")
           : [],
       ),
+      returnStepId,
     };
   } catch {
     return createInitialState();
@@ -45,6 +51,7 @@ export function saveState(state: AppState, storage: Storage = localStorage): voi
       mysterySet: state.mysterySet,
       mysterySelectionMode: state.mysterySelectionMode,
       completedStepIds: normalizeCompletedStepIds(state.completedStepIds),
+      returnStepId: state.returnStepId,
     }),
   );
 }
