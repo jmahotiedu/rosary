@@ -4,6 +4,8 @@ import {
   clickRosaryStep,
   expectNoHorizontalOverflow,
   openFreshRosary,
+  reopenRosary,
+  waitForSavedStep,
 } from "./helpers";
 
 test("an accidental jump returns to the exact pre-jump prayer", async ({ page }, testInfo) => {
@@ -24,13 +26,15 @@ test("an accidental jump returns to the exact pre-jump prayer", async ({ page },
   await attachFullPageScreenshot(page, testInfo, "accidental-jump-exact-recovery");
 });
 
-test("recovery location survives reload", async ({ page }) => {
+test("recovery location survives reopening the app", async ({ page }) => {
   await openFreshRosary(page);
   await page.getByRole("button", { name: "Next prayer" }).click();
   await expect(page.getByRole("heading", { name: "Opening Our Father" })).toBeVisible();
 
   await clickRosaryStep(page, "decade-4-hail-7");
-  await page.reload();
+  await expect(page.getByRole("heading", { name: "Hail Mary 7 of 10" })).toBeVisible();
+  await waitForSavedStep(page, "decade-4-hail-7");
+  await reopenRosary(page);
   await expect(page.getByRole("heading", { name: "Hail Mary 7 of 10" })).toBeVisible();
 
   await page.getByRole("button", { name: "Previous" }).click();
@@ -52,14 +56,17 @@ test("normal Previous works at multiple sequence positions", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Opening Hail Mary 3 of 3" })).toBeVisible();
 });
 
-test("manual Mystery selection persists after reload", async ({ page }) => {
+test("manual Mystery selection persists after reopening", async ({ page }) => {
   await openFreshRosary(page);
 
   const selector = page.getByRole("combobox");
   await selector.selectOption("sorrowful");
   await expect(selector).toHaveValue("sorrowful");
+  await expect
+    .poll(async () => page.evaluate(() => localStorage.getItem("rosary:pwa:v1")))
+    .toContain('"mysterySet":"sorrowful"');
 
-  await page.reload();
+  await reopenRosary(page);
   await expect(page.getByRole("combobox")).toHaveValue("sorrowful");
 
   for (let index = 0; index < 5; index += 1) {
@@ -127,18 +134,19 @@ test("the rendered Rosary has no known stray center decoration or crucifix bead"
   await attachFullPageScreenshot(page, testInfo, "initial-rosary-render");
 });
 
-test("saved sequential progress restores after reload", async ({ page }) => {
+test("saved sequential progress restores after reopening", async ({ page }) => {
   await openFreshRosary(page);
   for (let index = 0; index < 4; index += 1) {
     await page.getByRole("button", { name: "Next prayer" }).click();
   }
   await expect(page.getByRole("heading", { name: "Opening Hail Mary 3 of 3" })).toBeVisible();
+  await waitForSavedStep(page, "opening-hail-3");
 
-  const completedBeforeReload = await page.locator(".is-complete").count();
-  await page.reload();
+  const completedBeforeReopen = await page.locator(".is-complete").count();
+  await reopenRosary(page);
 
   await expect(page.getByRole("heading", { name: "Opening Hail Mary 3 of 3" })).toBeVisible();
-  await expect(page.locator(".is-complete")).toHaveCount(completedBeforeReload);
+  await expect(page.locator(".is-complete")).toHaveCount(completedBeforeReopen);
 });
 
 test("the complete journey reaches final prayers and a true completed state", async ({
@@ -147,15 +155,15 @@ test("the complete journey reaches final prayers and a true completed state", as
   test.setTimeout(90_000);
   await openFreshRosary(page);
 
+  // There are 67 canonical steps. From step 1, 66 advances reach the final-prayers step.
   for (let step = 0; step < 66; step += 1) {
-    const next = page.getByRole("button", { name: /Next prayer|Finish Rosary/ });
-    await next.click();
-    if (await page.getByRole("button", { name: "Rosary complete" }).isVisible().catch(() => false)) {
-      break;
-    }
+    await page.getByRole("button", { name: "Next prayer" }).click();
   }
 
   await expect(page.getByRole("heading", { name: "Conclude the Rosary" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Finish Rosary" })).toBeEnabled();
+  await page.getByRole("button", { name: "Finish Rosary" }).click();
+
   await expect(page.getByRole("button", { name: "Rosary complete" })).toBeDisabled();
   await expect(page.locator(".progress-ring span")).toHaveText("100%");
 
