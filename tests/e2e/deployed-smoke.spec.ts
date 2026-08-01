@@ -16,3 +16,66 @@ test("deployed Pages site loads, advances, and registers its service worker", as
 
   expect(serviceWorkerUrl).toMatch(/\/rosary\/sw\.js$/);
 });
+
+test("the recovery release evicts the pre-fix service-worker cache", async ({ page }) => {
+  test.setTimeout(45_000);
+  await openFreshRosary(page);
+
+  const upgrade = await page.evaluate(async () => {
+    if (!("serviceWorker" in navigator) || !("caches" in window)) return null;
+
+    const current = await navigator.serviceWorker.ready;
+    await current.unregister();
+    await Promise.all((await caches.keys()).map((name) => caches.delete(name)));
+
+    const staleUrl = new URL("src/domain/progress.js", window.location.href).href;
+    const oldCache = await caches.open("rosary-v2");
+    await oldCache.put(
+      staleUrl,
+      new Response("stale-pre-recovery-module", {
+        headers: { "Content-Type": "text/javascript" },
+      }),
+    );
+
+    const registration = await navigator.serviceWorker.register(
+      "/rosary/sw.js?upgrade-check=rosary-v3",
+      {
+        scope: "/rosary/",
+        updateViaCache: "none",
+      },
+    );
+    const worker = registration.installing ?? registration.waiting ?? registration.active;
+    if (!worker) throw new Error("Expected the upgrade worker to exist");
+
+    if (worker.state !== "activated") {
+      await new Promise<void>((resolve, reject) => {
+        const timeout = window.setTimeout(
+          () => reject(new Error(`Upgrade worker stopped at ${worker.state}`)),
+          15_000,
+        );
+        worker.addEventListener("statechange", () => {
+          if (worker.state === "activated") {
+            window.clearTimeout(timeout);
+            resolve();
+          }
+        });
+      });
+    }
+
+    const cacheNames = await caches.keys();
+    const staleResponse = await caches.match(staleUrl);
+    return {
+      activeScriptUrl: registration.active?.scriptURL ?? null,
+      cacheNames,
+      staleBody: staleResponse ? await staleResponse.text() : null,
+    };
+  });
+
+  expect(upgrade).not.toBeNull();
+  expect(upgrade!.activeScriptUrl).toMatch(
+    /\/rosary\/sw\.js\?upgrade-check=rosary-v3$/,
+  );
+  expect(upgrade!.cacheNames).toContain("rosary-v3");
+  expect(upgrade!.cacheNames).not.toContain("rosary-v2");
+  expect(upgrade!.staleBody).not.toBe("stale-pre-recovery-module");
+});
