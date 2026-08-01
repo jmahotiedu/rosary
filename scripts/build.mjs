@@ -1,1 +1,62 @@
-import { rm,mkdir,cp,readFile,writeFile,readdir } from "node:fs/promises";import { execFileSync } from "node:child_process";import path from "node:path";const out="dist";await rm(out,{recursive:true,force:true});await mkdir(out,{recursive:true});execFileSync("tsc",["--outDir",".build","--noEmit","false","--module","ESNext","--target","ES2022","--moduleResolution","Bundler","--skipLibCheck"],{stdio:"inherit"});async function rewrite(dir){for(const entry of await readdir(dir,{withFileTypes:true})){const p=path.join(dir,entry.name);if(entry.isDirectory())await rewrite(p);else if(p.endsWith(".js")){let s=await readFile(p,"utf8");s=s.replace(/(from\s+["'])(\.{1,2}\/[^"']+?)(["'])/g,(m,a,b,c)=>b.endsWith(".js")?m:`${a}${b}.js${c}`);await writeFile(p,s);}}}await rewrite(".build");await cp(".build",out,{recursive:true});await rm(".build",{recursive:true,force:true});await cp("public",out,{recursive:true});await cp("src/styles",`${out}/styles`,{recursive:true});let html=await readFile("src/index.html","utf8");html=html.replace('src="/main.ts"','src="/rosary/main.js"');await writeFile(`${out}/index.html`,html);console.log("Built dist/");
+import { execFileSync } from "node:child_process";
+import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import path from "node:path";
+import process from "node:process";
+
+const outputDirectory = "dist";
+const temporaryDirectory = ".build";
+const compiler = process.platform === "win32" ? "tsc.cmd" : "tsc";
+
+await rm(outputDirectory, { recursive: true, force: true });
+await rm(temporaryDirectory, { recursive: true, force: true });
+await mkdir(outputDirectory, { recursive: true });
+
+execFileSync(
+  compiler,
+  [
+    "--outDir",
+    temporaryDirectory,
+    "--noEmit",
+    "false",
+    "--module",
+    "ESNext",
+    "--target",
+    "ES2022",
+    "--moduleResolution",
+    "Bundler",
+    "--skipLibCheck",
+  ],
+  { stdio: "inherit" },
+);
+
+async function addJavaScriptExtensions(directory) {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      await addJavaScriptExtensions(entryPath);
+      continue;
+    }
+    if (!entryPath.endsWith(".js")) continue;
+
+    let source = await readFile(entryPath, "utf8");
+    source = source.replace(
+      /(from\s+["'])(\.{1,2}\/[^"']+?)(["'])/g,
+      (match, prefix, importPath, suffix) =>
+        importPath.endsWith(".js") ? match : `${prefix}${importPath}.js${suffix}`,
+    );
+    await writeFile(entryPath, source);
+  }
+}
+
+await addJavaScriptExtensions(temporaryDirectory);
+await cp(temporaryDirectory, outputDirectory, { recursive: true });
+await rm(temporaryDirectory, { recursive: true, force: true });
+await cp("public", outputDirectory, { recursive: true });
+await cp("src/styles", `${outputDirectory}/styles`, { recursive: true });
+await writeFile(`${outputDirectory}/.nojekyll`, "");
+
+let html = await readFile("src/index.html", "utf8");
+html = html.replace('src="/main.ts"', 'src="/rosary/main.js"');
+await writeFile(`${outputDirectory}/index.html`, html);
+
+console.log("Built dist/ for https://jmahotiedu.github.io/rosary/");
