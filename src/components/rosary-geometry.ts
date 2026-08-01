@@ -15,15 +15,15 @@ export interface BeadGeometry extends Point {
   readonly number?: number;
 }
 
-export const VIEWBOX = { width: 390, height: 720 } as const;
+export const VIEWBOX = { width: 390, height: 520 } as const;
 
 export function createRosaryGeometry(): readonly BeadGeometry[] {
   const beads: BeadGeometry[] = [];
   const loop: BeadGeometry[] = [];
   const centerX = 195;
-  const centerY = 220;
-  const radiusX = 142;
-  const radiusY = 170;
+  const centerY = 145;
+  const radiusX = 132;
+  const radiusY = 118;
 
   for (let index = 0; index < 55; index++) {
     const angle = Math.PI / 2 - (index * 2 * Math.PI) / 55;
@@ -64,7 +64,7 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
 
   beads.push({
     x: 195,
-    y: 430,
+    y: 285,
     radius: 14,
     hitRadius: 24,
     large: true,
@@ -72,7 +72,7 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
     stepId: "opening-glory",
   });
 
-  const openingHailMaryPositions = [560, 522, 484];
+  const openingHailMaryPositions = [390, 360, 330];
   openingHailMaryPositions.forEach((y, index) => {
     beads.push({
       x: 195,
@@ -88,7 +88,7 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
 
   beads.push({
     x: 195,
-    y: 606,
+    y: 430,
     radius: 11,
     hitRadius: 22,
     large: true,
@@ -98,7 +98,7 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
 
   beads.push({
     x: 195,
-    y: 675,
+    y: 485,
     radius: 0,
     hitRadius: 34,
     large: true,
