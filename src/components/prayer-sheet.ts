@@ -14,8 +14,9 @@ export function renderPrayerSheet(
   navigation: PrayerSheetNavigation,
 ): string {
   const mystery = step.mysteryIndex === undefined ? null : MYSTERIES[set][step.mysteryIndex];
+  const completedAtEnd = navigation.atEnd && navigation.rosaryComplete;
   const nextLabel = navigation.atEnd
-    ? navigation.rosaryComplete
+    ? completedAtEnd
       ? "Rosary complete"
       : "Finish Rosary"
     : "Next prayer";
@@ -39,7 +40,7 @@ export function renderPrayerSheet(
     </div>
     <div class="sheet-actions">
       <button type="button" data-action="previous" ${navigation.atStart ? "disabled" : ""}>Previous</button>
-      <button type="button" class="primary" data-action="next" ${navigation.rosaryComplete ? "disabled" : ""}>${nextLabel}</button>
+      <button type="button" class="primary" data-action="next" ${completedAtEnd ? "disabled" : ""}>${nextLabel}</button>
     </div>
   </section>`;
 }
