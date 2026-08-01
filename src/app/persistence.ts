@@ -16,10 +16,18 @@ export function loadState(storage: Storage = localStorage): AppState {
       typeof saved.currentStepId !== "string" ||
       !STEP_BY_ID.has(saved.currentStepId) ||
       !SETS.has(String(saved.mysterySet)) ||
-      (saved.mysterySelectionMode !== "automatic" && saved.mysterySelectionMode !== "manual")
+      (saved.mysterySelectionMode !== "automatic" &&
+        saved.mysterySelectionMode !== "manual")
     ) {
       return createInitialState();
     }
+
+    const inspectionReturnStepId =
+      typeof saved.inspectionReturnStepId === "string" &&
+      STEP_BY_ID.has(saved.inspectionReturnStepId) &&
+      saved.inspectionReturnStepId !== saved.currentStepId
+        ? saved.inspectionReturnStepId
+        : null;
 
     return {
       ...createInitialState(),
@@ -28,16 +36,22 @@ export function loadState(storage: Storage = localStorage): AppState {
       mysterySelectionMode: saved.mysterySelectionMode,
       completedStepIds: normalizeCompletedStepIds(
         Array.isArray(saved.completedStepIds)
-          ? saved.completedStepIds.filter((id): id is string => typeof id === "string")
+          ? saved.completedStepIds.filter(
+              (id): id is string => typeof id === "string",
+            )
           : [],
       ),
+      inspectionReturnStepId,
     };
   } catch {
     return createInitialState();
   }
 }
 
-export function saveState(state: AppState, storage: Storage = localStorage): void {
+export function saveState(
+  state: AppState,
+  storage: Storage = localStorage,
+): void {
   storage.setItem(
     APP_STORAGE_KEY,
     JSON.stringify({
@@ -45,6 +59,7 @@ export function saveState(state: AppState, storage: Storage = localStorage): voi
       mysterySet: state.mysterySet,
       mysterySelectionMode: state.mysterySelectionMode,
       completedStepIds: normalizeCompletedStepIds(state.completedStepIds),
+      inspectionReturnStepId: state.inspectionReturnStepId,
     }),
   );
 }

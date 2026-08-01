@@ -7,6 +7,7 @@ export interface AppState {
   readonly mysterySet: MysterySetId;
   readonly mysterySelectionMode: MysterySelectionMode;
   readonly completedStepIds: readonly string[];
+  readonly inspectionReturnStepId: string | null;
 }
 
 export function createInitialState(date = new Date()): AppState {

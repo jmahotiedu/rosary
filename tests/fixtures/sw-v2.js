@@ -1,4 +1,4 @@
-const CACHE_NAME = "rosary-v3";
+const CACHE_NAME = "rosary-v2";
 const APP_SHELL = [
   "/rosary/",
   "/rosary/index.html",

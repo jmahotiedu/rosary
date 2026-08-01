@@ -13,8 +13,8 @@ import type { MysterySetId } from "../domain/prayer-step";
 import { loadState, saveState } from "./persistence";
 import { renderRosaryMap } from "../components/rosary-map";
 import {
+  clientPointToViewBox,
   findNearestRosaryStepId,
-  VIEWBOX,
 } from "../components/rosary-geometry";
 import { renderPrayerSheet } from "../components/prayer-sheet";
 import { renderMysterySelector } from "../components/mystery-selector";
@@ -28,6 +28,7 @@ export function mountApp(root: HTMLElement): void {
   const navigationState = (): NavigationState => ({
     currentStepId: state.currentStepId,
     completedStepIds: state.completedStepIds,
+    inspectionReturnStepId: state.inspectionReturnStepId,
   });
 
   const applyNavigation = (navigation: NavigationState): void => {
@@ -47,11 +48,11 @@ export function mountApp(root: HTMLElement): void {
         ${renderProgressHeader(completion, currentIndex + 1, ROSARY_SEQUENCE.length)}
         ${renderMysterySelector(state.mysterySet)}
         ${renderInstallPrompt()}
-        <p class="instruction">Tap a bead to inspect it. Only the Next prayer button marks a prayer complete.</p>
+        <p class="instruction">Tap a bead to inspect it. Previous returns to where you were; Next prayer marks the displayed prayer complete.</p>
         ${renderRosaryMap(state.currentStepId, state.completedStepIds)}
       </div>
       ${renderPrayerSheet(step, state.mysterySet, {
-        atStart: currentIndex === 0,
+        atStart: currentIndex === 0 && state.inspectionReturnStepId === null,
         atEnd: currentIndex === ROSARY_SEQUENCE.length - 1,
         rosaryComplete: complete,
       })}
@@ -71,12 +72,12 @@ export function mountApp(root: HTMLElement): void {
     stage?.addEventListener("click", (event) => {
       if (event.target instanceof HTMLButtonElement) return;
 
-      const bounds = stage.getBoundingClientRect();
-      if (bounds.width === 0 || bounds.height === 0) return;
+      const visual = stage.querySelector<SVGSVGElement>(".rosary-visual");
+      const bounds = (visual ?? stage).getBoundingClientRect();
+      const point = clientPointToViewBox(event.clientX, event.clientY, bounds);
+      if (!point) return;
 
-      const x = ((event.clientX - bounds.left) / bounds.width) * VIEWBOX.width;
-      const y = ((event.clientY - bounds.top) / bounds.height) * VIEWBOX.height;
-      const stepId = findNearestRosaryStepId(x, y);
+      const stepId = findNearestRosaryStepId(point.x, point.y);
       if (stepId) applyNavigation(selectStep(navigationState(), stepId));
     });
 
@@ -89,7 +90,9 @@ export function mountApp(root: HTMLElement): void {
     });
 
     root.querySelector('[data-action="restart"]')?.addEventListener("click", () => {
-      const confirmed = window.confirm("Start the Rosary over and clear completed prayers?");
+      const confirmed = window.confirm(
+        "Start the Rosary over and clear completed prayers?",
+      );
       if (confirmed) applyNavigation(restartNavigation());
     });
 
@@ -98,18 +101,23 @@ export function mountApp(root: HTMLElement): void {
       ?.addEventListener("change", (event) => {
         state = {
           ...state,
-          mysterySet: (event.currentTarget as HTMLSelectElement).value as MysterySetId,
+          mysterySet: (event.currentTarget as HTMLSelectElement)
+            .value as MysterySetId,
           mysterySelectionMode: "manual",
         };
         saveState(state);
         render();
       });
 
-    const install = root.querySelector<HTMLButtonElement>('[data-action="install"]');
+    const install = root.querySelector<HTMLButtonElement>(
+      '[data-action="install"]',
+    );
     if (deferredPrompt && install) {
       install.hidden = false;
       install.addEventListener("click", async () => {
-        const promptEvent = deferredPrompt as Event & { prompt: () => Promise<void> };
+        const promptEvent = deferredPrompt as Event & {
+          prompt: () => Promise<void>;
+        };
         await promptEvent.prompt();
         deferredPrompt = null;
         render();
