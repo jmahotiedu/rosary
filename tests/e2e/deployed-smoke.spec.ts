@@ -26,8 +26,6 @@ test("an active v2 installed client upgrades, reloads, and uses recovery behavio
 }) => {
   test.setTimeout(60_000);
 
-  // Start on a same-origin document inside the production scope, install the exact v2 worker,
-  // and wait until this already-open client is actively controlled by it.
   await page.goto("./manifest.webmanifest?upgrade-probe=active-v2", {
     waitUntil: "domcontentloaded",
   });
@@ -85,8 +83,11 @@ test("an active v2 installed client upgrades, reloads, and uses recovery behavio
       });
     }
 
-    const mainUrl = new URL("src/main.js", window.location.href).href;
-    const progressUrl = new URL("src/domain/progress.js", window.location.href).href;
+    // The production build emits these modules at /rosary/main.js and
+    // /rosary/domain/progress.js. Cache the historical responses at those exact URLs so the
+    // active v2 worker serves the real stale-module path used by returning installations.
+    const mainUrl = new URL("main.js", window.location.href).href;
+    const progressUrl = new URL("domain/progress.js", window.location.href).href;
     const [mainFixture, progressFixture] = await Promise.all([
       fetch("/rosary/test-fixtures/main-v2.js", { cache: "no-store" }),
       fetch("/rosary/test-fixtures/progress-v2.js", { cache: "no-store" }),
@@ -95,9 +96,6 @@ test("an active v2 installed client upgrades, reloads, and uses recovery behavio
       throw new Error("Could not load the cached v2 app fixtures");
     }
 
-    // Recreate historical module responses under their production request URLs. Synthetic
-    // responses intentionally have no fixture response URL, so relative imports resolve from
-    // /src/main.js and /src/domain/progress.js exactly as they did in the installed application.
     const oldCache = await caches.open("rosary-v2");
     await Promise.all([
       oldCache.put(
@@ -124,13 +122,18 @@ test("an active v2 installed client upgrades, reloads, and uses recovery behavio
   expect(v2Setup!.controllerUrl).toMatch(/\/rosary\/sw-v2-fixture\.js$/);
   expect(v2Setup!.cacheNames).toContain("rosary-v2");
 
-  // Load the app through the active v2 worker. It serves the cached pre-recovery bootstrap and
-  // progress module, which then requests the production v3 worker. controllerchange reloads the
-  // same installed client into current code.
   await page.goto("./", { waitUntil: "domcontentloaded" }).catch(() => null);
   await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible({
     timeout: 20_000,
   });
+
+  const readStorage = async (key: string): Promise<string | null> => {
+    try {
+      return await page.evaluate((storageKey) => localStorage.getItem(storageKey), key);
+    } catch {
+      return null;
+    }
+  };
 
   await expect
     .poll(
@@ -147,30 +150,31 @@ test("an active v2 installed client upgrades, reloads, and uses recovery behavio
     )
     .toMatch(/\/rosary\/sw\.js$/);
 
-  // These markers prove the active v2 worker served and executed both cached old modules. The
-  // recorded result is the old bug: Previous moved to the neighboring fifth-decade bead instead
-  // of returning to the prayer displayed before inspection.
+  await expect.poll(() => readStorage("rosary:test:loaded-v2-app")).toBe("true");
+  await expect.poll(() => readStorage("rosary:test:loaded-v2-progress")).toBe("true");
   await expect
-    .poll(async () =>
-      page.evaluate(() => localStorage.getItem("rosary:test:loaded-v2-app")),
-    )
-    .toBe("true");
-  await expect
-    .poll(async () =>
-      page.evaluate(() => localStorage.getItem("rosary:test:loaded-v2-progress")),
-    )
-    .toBe("true");
-  await expect
-    .poll(async () =>
-      page.evaluate(() => localStorage.getItem("rosary:test:v2-previous-result")),
-    )
+    .poll(() => readStorage("rosary:test:v2-previous-result"))
     .toBe("decade-5-hail-9");
 
-  await expect.poll(async () => page.evaluate(() => caches.keys())).toContain("rosary-v3");
-  await expect.poll(async () => page.evaluate(() => caches.keys())).not.toContain("rosary-v2");
+  await expect
+    .poll(async () => {
+      try {
+        return await page.evaluate(() => caches.keys());
+      } catch {
+        return [];
+      }
+    })
+    .toContain("rosary-v3");
+  await expect
+    .poll(async () => {
+      try {
+        return await page.evaluate(() => caches.keys());
+      } catch {
+        return ["rosary-v2"];
+      }
+    })
+    .not.toContain("rosary-v2");
 
-  // Verify the refreshed app is not merely controlled by v3: it must exhibit the exact recovery
-  // behavior that was absent from the cached v2 progress module.
   await page.getByRole("button", { name: "Next prayer" }).click();
   await page.getByRole("button", { name: "Next prayer" }).click();
   await expect(page.getByRole("heading", { name: "Opening Hail Mary 1 of 3" })).toBeVisible();
