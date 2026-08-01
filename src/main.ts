@@ -1,0 +1,1 @@
+import { mountApp } from "./app/app"; import { registerServiceWorker } from "./app/register-service-worker"; const root=document.querySelector<HTMLElement>("#app"); if(!root) throw new Error("Missing #app"); mountApp(root); void registerServiceWorker();
