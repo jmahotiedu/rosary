@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { ROSARY_SEQUENCE } from "../../src/data/rosary-sequence";
 import {
   attachFullPageScreenshot,
   clickRosaryStep,
@@ -24,6 +25,19 @@ test("an accidental jump returns to the exact pre-jump prayer", async ({ page },
   await expect(page.locator(".is-complete")).toHaveCount(2);
 
   await attachFullPageScreenshot(page, testInfo, "accidental-jump-exact-recovery");
+});
+
+test("tapping the return bead exits inspection mode immediately", async ({ page }) => {
+  await openFreshRosary(page);
+
+  await clickRosaryStep(page, "decade-4-hail-7");
+  await expect(page.getByRole("heading", { name: "Hail Mary 7 of 10" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Previous" })).toBeEnabled();
+
+  await clickRosaryStep(page, "crucifix");
+  await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Previous" })).toBeDisabled();
+  await expect(page.locator(".is-complete")).toHaveCount(0);
 });
 
 test("recovery location survives reopening the app", async ({ page }) => {
@@ -121,13 +135,25 @@ test("opening Hail Mary highlights follow the physical strand toward the centerp
   await attachFullPageScreenshot(page, testInfo, "opening-strand-sequence");
 });
 
-test("the rendered Rosary has no known stray center decoration or crucifix bead", async ({
+test("the rendered Rosary has no unexplained center ellipse or crucifix bead", async ({
   page,
 }, testInfo) => {
   await openFreshRosary(page);
 
-  await expect(page.locator('[data-decoration="center-ellipse"]')).toHaveCount(0);
+  await expect(page.locator('[data-domain-part="centerpiece"]')).toHaveCount(1);
+  await expect(page.locator('[data-domain-part="crucifix"]')).toHaveCount(1);
   await expect(page.locator(".cross-visual")).toHaveCount(1);
+
+  const unexplainedCenterEllipses = await page
+    .locator('.rosary-visual ellipse:not([data-domain-part])')
+    .evaluateAll((ellipses) =>
+      ellipses.filter((ellipse) => {
+        const cx = Number(ellipse.getAttribute("cx"));
+        const cy = Number(ellipse.getAttribute("cy"));
+        return cx >= 170 && cx <= 220 && cy >= 390 && cy <= 470;
+      }).length,
+    );
+  expect(unexplainedCenterEllipses).toBe(0);
   await expect(page.locator('circle[cx="195"][cy="675"]')).toHaveCount(0);
 
   await expectNoHorizontalOverflow(page);
@@ -155,8 +181,7 @@ test("the complete journey reaches final prayers and a true completed state", as
   test.setTimeout(90_000);
   await openFreshRosary(page);
 
-  // There are 67 canonical steps. From step 1, 66 advances reach the final-prayers step.
-  for (let step = 0; step < 66; step += 1) {
+  for (let step = 1; step < ROSARY_SEQUENCE.length; step += 1) {
     await page.getByRole("button", { name: "Next prayer" }).click();
   }
 
@@ -166,11 +191,11 @@ test("the complete journey reaches final prayers and a true completed state", as
 
   await expect(page.getByRole("button", { name: "Rosary complete" })).toBeDisabled();
   await expect(page.locator(".progress-ring span")).toHaveText("100%");
+  await attachFullPageScreenshot(page, testInfo, "completed-rosary");
 
   await page.getByRole("button", { name: "Previous" }).click();
   await expect(page.getByRole("heading", { name: "Complete decade 5" })).toBeVisible();
-
-  await attachFullPageScreenshot(page, testInfo, "completed-rosary");
+  await attachFullPageScreenshot(page, testInfo, "completed-rosary-previous-recovery");
 });
 
 test("start over clears completed prayers and returns to the crucifix", async ({ page }) => {
