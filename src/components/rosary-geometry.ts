@@ -3,6 +3,18 @@ export interface Point {
   readonly y: number;
 }
 
+export interface RectLike {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface ClientPoint {
+  readonly clientX: number;
+  readonly clientY: number;
+}
+
 export type RosaryVisualKind = "bead" | "medallion" | "cross" | "transition";
 
 export interface BeadGeometry extends Point {
@@ -16,6 +28,71 @@ export interface BeadGeometry extends Point {
 }
 
 export const VIEWBOX = { width: 390, height: 720 } as const;
+
+interface ViewBoxTransform {
+  readonly scale: number;
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * Reproduce SVG's preserveAspectRatio="xMidYMid meet" transform.
+ * The Rosary must use this transform for hit testing because the SVG can be
+ * letterboxed when its rendered box is not exactly the viewBox aspect ratio.
+ */
+function getViewBoxTransform(bounds: RectLike): ViewBoxTransform | null {
+  if (bounds.width <= 0 || bounds.height <= 0) return null;
+
+  const scale = Math.min(
+    bounds.width / VIEWBOX.width,
+    bounds.height / VIEWBOX.height,
+  );
+  const width = VIEWBOX.width * scale;
+  const height = VIEWBOX.height * scale;
+
+  return {
+    scale,
+    width,
+    height,
+    left: bounds.left + (bounds.width - width) / 2,
+    top: bounds.top + (bounds.height - height) / 2,
+  };
+}
+
+/** Convert a browser pointer location into Rosary viewBox coordinates. */
+export function clientPointToViewBox(
+  clientX: number,
+  clientY: number,
+  bounds: RectLike,
+): Point | null {
+  const transform = getViewBoxTransform(bounds);
+  if (!transform) return null;
+
+  const x = (clientX - transform.left) / transform.scale;
+  const y = (clientY - transform.top) / transform.scale;
+
+  if (x < 0 || y < 0 || x > VIEWBOX.width || y > VIEWBOX.height) return null;
+  return { x, y };
+}
+
+/** Convert a Rosary viewBox location into the browser coordinate used by a real tap. */
+export function viewBoxPointToClient(
+  x: number,
+  y: number,
+  bounds: RectLike,
+): ClientPoint | null {
+  if (x < 0 || y < 0 || x > VIEWBOX.width || y > VIEWBOX.height) return null;
+
+  const transform = getViewBoxTransform(bounds);
+  if (!transform) return null;
+
+  return {
+    clientX: transform.left + x * transform.scale,
+    clientY: transform.top + y * transform.scale,
+  };
+}
 
 export function createRosaryGeometry(): readonly BeadGeometry[] {
   const beads: BeadGeometry[] = [];
