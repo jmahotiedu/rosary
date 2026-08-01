@@ -1,14 +1,20 @@
 import { expect, type Page, type TestInfo } from "@playwright/test";
 
+/**
+ * Playwright creates an isolated browser context for every test, so a new page already has
+ * empty local/session storage and an isolated service-worker/cache partition. Avoid clearing
+ * storage after navigation: the PWA can legitimately activate a worker and navigate while the
+ * page is loading, which made the old helper race Chromium and WebKit.
+ */
 export async function openFreshRosary(page: Page): Promise<void> {
-  await page.goto("./");
-  await page.evaluate(() => {
-    window.localStorage.clear();
-    window.sessionStorage.clear();
-  });
-  await page.reload();
-  await page.waitForLoadState("networkidle");
+  await page.goto("./", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
+}
+
+/** Reopen the app without clearing persisted progress. */
+export async function reopenRosary(page: Page): Promise<void> {
+  await page.goto("./", { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".prayer-sheet h2")).toBeVisible();
 }
 
 export async function clickRosaryStep(page: Page, stepId: string): Promise<void> {
@@ -29,6 +35,14 @@ export async function clickRosaryStep(page: Page, stepId: string): Promise<void>
     bounds!.x + (x / 390) * bounds!.width,
     bounds!.y + (y / 720) * bounds!.height,
   );
+}
+
+export async function waitForSavedStep(page: Page, stepId: string): Promise<void> {
+  await expect
+    .poll(async () =>
+      page.evaluate(() => window.localStorage.getItem("rosary:pwa:v1")),
+    )
+    .toContain(`"currentStepId":"${stepId}"`);
 }
 
 export async function attachFullPageScreenshot(
