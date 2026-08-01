@@ -1,1 +1,20 @@
-import test from "node:test";import assert from "node:assert/strict";import { access,readFile } from "node:fs/promises";test("PWA files exist",async()=>{for(const p of ["public/manifest.webmanifest","public/sw.js","public/icons/icon-192.png","public/icons/icon-512.png"])await access(p)});test("touch targets are at least 44px",async()=>{const css=await readFile("src/styles/rosary.css","utf8");assert.match(css,/min-width:44px/);assert.match(css,/min-height:44px/)});
+import test from "node:test";
+import assert from "node:assert/strict";
+import { access, readFile } from "node:fs/promises";
+
+test("PWA files exist", async () => {
+  for (const path of [
+    "public/manifest.webmanifest",
+    "public/sw.js",
+    "public/icons/icon-192.png",
+    "public/icons/icon-512.png",
+  ]) {
+    await access(path);
+  }
+});
+
+test("touch targets are at least 44px", async () => {
+  const css = await readFile("src/styles/rosary.css", "utf8");
+  assert.match(css, /min-width:\s*44px/);
+  assert.match(css, /min-height:\s*44px/);
+});
