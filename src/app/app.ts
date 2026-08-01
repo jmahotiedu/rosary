@@ -12,6 +12,10 @@ import {
 import type { MysterySetId } from "../domain/prayer-step";
 import { loadState, saveState } from "./persistence";
 import { renderRosaryMap } from "../components/rosary-map";
+import {
+  findNearestRosaryStepId,
+  VIEWBOX,
+} from "../components/rosary-geometry";
 import { renderPrayerSheet } from "../components/prayer-sheet";
 import { renderMysterySelector } from "../components/mystery-selector";
 import { renderProgressHeader } from "../components/progress-header";
@@ -61,6 +65,19 @@ export function mountApp(root: HTMLElement): void {
       element.addEventListener("click", () => {
         applyNavigation(selectStep(navigationState(), element.dataset.stepId!));
       });
+    });
+
+    const stage = root.querySelector<HTMLElement>("[data-rosary-stage]");
+    stage?.addEventListener("click", (event) => {
+      if (event.target instanceof HTMLButtonElement) return;
+
+      const bounds = stage.getBoundingClientRect();
+      if (bounds.width === 0 || bounds.height === 0) return;
+
+      const x = ((event.clientX - bounds.left) / bounds.width) * VIEWBOX.width;
+      const y = ((event.clientY - bounds.top) / bounds.height) * VIEWBOX.height;
+      const stepId = findNearestRosaryStepId(x, y);
+      if (stepId) applyNavigation(selectStep(navigationState(), stepId));
     });
 
     root.querySelector('[data-action="previous"]')?.addEventListener("click", () => {
