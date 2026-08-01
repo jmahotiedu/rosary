@@ -1,1 +1,0 @@
-export function renderProgressHeader(progress:number):string{return `<header class="app-header"><div><p class="eyebrow">Interactive prayer guide</p><h1>Rosary</h1></div><div class="progress-ring" style="--progress:${Math.round(progress*360)}deg" aria-label="${Math.round(progress*100)} percent complete"><span>${Math.round(progress*100)}%</span></div></header>`;}

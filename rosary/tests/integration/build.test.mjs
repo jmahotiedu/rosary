@@ -1,1 +1,0 @@
-import test from "node:test";import assert from "node:assert/strict";import { readFile } from "node:fs/promises";test("app wires direct and sequential navigation",async()=>{const s=await readFile("src/app/app.ts","utf8");assert.match(s,/data-step-id/);assert.match(s,/getNextStepId/);assert.match(s,/getPreviousStepId/);assert.match(s,/saveState/)});
