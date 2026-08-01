@@ -35,6 +35,14 @@ export function restartNavigation(): NavigationState {
 export function selectStep(state: NavigationState, stepId: string): NavigationState {
   if (!validStepId(stepId) || stepId === state.currentStepId) return state;
 
+  if (stepId === state.inspectionReturnStepId) {
+    return {
+      ...state,
+      currentStepId: stepId,
+      inspectionReturnStepId: null,
+    };
+  }
+
   return {
     ...state,
     currentStepId: stepId,
