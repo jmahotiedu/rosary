@@ -4,6 +4,7 @@ import { getNextStepId, getPreviousStepId } from "./sequence";
 export interface NavigationState {
   readonly currentStepId: string;
   readonly completedStepIds: readonly string[];
+  readonly inspectionReturnStepId: string | null;
 }
 
 function validStepId(id: string): boolean {
@@ -13,20 +14,35 @@ function validStepId(id: string): boolean {
 export function normalizeCompletedStepIds(ids: readonly string[]): string[] {
   const seen = new Set<string>();
   const valid = ids.filter((id) => validStepId(id) && !seen.has(id) && seen.add(id));
-  return valid.sort((left, right) =>
-    (STEP_BY_ID.get(left)?.index ?? 0) - (STEP_BY_ID.get(right)?.index ?? 0),
+  return valid.sort(
+    (left, right) =>
+      (STEP_BY_ID.get(left)?.index ?? 0) - (STEP_BY_ID.get(right)?.index ?? 0),
   );
 }
 
 export function restartNavigation(): NavigationState {
-  return { currentStepId: ROSARY_SEQUENCE[0]!.id, completedStepIds: [] };
+  return {
+    currentStepId: ROSARY_SEQUENCE[0]!.id,
+    completedStepIds: [],
+    inspectionReturnStepId: null,
+  };
 }
 
+/**
+ * Direct bead taps are inspections, not sequential navigation.
+ * Preserve the last intentional location so one press of Previous can undo an accidental jump.
+ */
 export function selectStep(state: NavigationState, stepId: string): NavigationState {
-  if (!validStepId(stepId)) return state;
-  return { ...state, currentStepId: stepId };
+  if (!validStepId(stepId) || stepId === state.currentStepId) return state;
+
+  return {
+    ...state,
+    currentStepId: stepId,
+    inspectionReturnStepId: state.inspectionReturnStepId ?? state.currentStepId,
+  };
 }
 
+/** Sequential forward navigation commits only the prayer being left. */
 export function advanceStep(state: NavigationState): NavigationState {
   const completedStepIds = normalizeCompletedStepIds([
     ...state.completedStepIds,
@@ -36,13 +52,27 @@ export function advanceStep(state: NavigationState): NavigationState {
   return {
     currentStepId: getNextStepId(state.currentStepId),
     completedStepIds,
+    inspectionReturnStepId: null,
   };
 }
 
+/**
+ * Previous first cancels a direct inspection and restores the exact pre-jump location.
+ * Outside inspection mode it behaves as normal sequential backward navigation.
+ */
 export function retreatStep(state: NavigationState): NavigationState {
+  if (state.inspectionReturnStepId && validStepId(state.inspectionReturnStepId)) {
+    return {
+      ...state,
+      currentStepId: state.inspectionReturnStepId,
+      inspectionReturnStepId: null,
+    };
+  }
+
   return {
     ...state,
     currentStepId: getPreviousStepId(state.currentStepId),
+    inspectionReturnStepId: null,
   };
 }
 
