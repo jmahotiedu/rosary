@@ -21,61 +21,55 @@ test("the recovery release evicts the pre-fix service-worker cache", async ({ pa
   test.setTimeout(45_000);
   await openFreshRosary(page);
 
-  const upgrade = await page.evaluate(async () => {
-    if (!("serviceWorker" in navigator) || !("caches" in window)) return null;
+  const staleUrl = await page.evaluate(
+    () => new URL("src/domain/progress.js", window.location.href).href,
+  );
+
+  await page.evaluate(async (url) => {
+    if (!("serviceWorker" in navigator) || !("caches" in window)) return;
 
     const current = await navigator.serviceWorker.ready;
     await current.unregister();
     await Promise.all((await caches.keys()).map((name) => caches.delete(name)));
 
-    const staleUrl = new URL("src/domain/progress.js", window.location.href).href;
     const oldCache = await caches.open("rosary-v2");
     await oldCache.put(
-      staleUrl,
+      url,
       new Response("stale-pre-recovery-module", {
         headers: { "Content-Type": "text/javascript" },
       }),
     );
+  }, staleUrl);
 
-    const registration = await navigator.serviceWorker.register(
-      "/rosary/sw.js?upgrade-check=rosary-v3",
-      {
-        scope: "/rosary/",
-        updateViaCache: "none",
-      },
-    );
-    const worker = registration.installing ?? registration.waiting ?? registration.active;
-    if (!worker) throw new Error("Expected the upgrade worker to exist");
+  // Activating rosary-v3 claims this existing page. The app's controllerchange handler then
+  // reloads it, so start the registration without awaiting its activation and observe the real
+  // installed-client refresh as a separate browser event.
+  const reloaded = page.waitForEvent("load", { timeout: 20_000 });
+  await page.evaluate(() => {
+    void navigator.serviceWorker.register("/rosary/sw.js", {
+      scope: "/rosary/",
+      updateViaCache: "none",
+    });
+  });
+  await reloaded;
+  await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
 
-    if (worker.state !== "activated") {
-      await new Promise<void>((resolve, reject) => {
-        const timeout = window.setTimeout(
-          () => reject(new Error(`Upgrade worker stopped at ${worker.state}`)),
-          15_000,
-        );
-        worker.addEventListener("statechange", () => {
-          if (worker.state === "activated") {
-            window.clearTimeout(timeout);
-            resolve();
-          }
-        });
-      });
-    }
+  await expect
+    .poll(async () => page.evaluate(() => caches.keys()))
+    .toContain("rosary-v3");
+  await expect
+    .poll(async () => page.evaluate(() => caches.keys()))
+    .not.toContain("rosary-v2");
 
-    const cacheNames = await caches.keys();
-    const staleResponse = await caches.match(staleUrl);
+  const upgrade = await page.evaluate(async (url) => {
+    const registration = await navigator.serviceWorker.ready;
+    const staleResponse = await caches.match(url);
     return {
       activeScriptUrl: registration.active?.scriptURL ?? null,
-      cacheNames,
       staleBody: staleResponse ? await staleResponse.text() : null,
     };
-  });
+  }, staleUrl);
 
-  expect(upgrade).not.toBeNull();
-  expect(upgrade!.activeScriptUrl).toMatch(
-    /\/rosary\/sw\.js\?upgrade-check=rosary-v3$/,
-  );
-  expect(upgrade!.cacheNames).toContain("rosary-v3");
-  expect(upgrade!.cacheNames).not.toContain("rosary-v2");
-  expect(upgrade!.staleBody).not.toBe("stale-pre-recovery-module");
+  expect(upgrade.activeScriptUrl).toMatch(/\/rosary\/sw\.js$/);
+  expect(upgrade.staleBody).not.toBe("stale-pre-recovery-module");
 });
