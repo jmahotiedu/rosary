@@ -1,0 +1,36 @@
+name: Generate browser-test lockfile
+
+on:
+  push:
+    branches: [quality/e2e-and-domain-design]
+    paths:
+      - .github/workflows/generate-browser-test-lock.yml
+
+permissions:
+  contents: write
+
+jobs:
+  lock:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: quality/e2e-and-domain-design
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Add locked browser-test dependencies
+        run: npm install --save-dev --save-exact @playwright/test@1.62.0 @axe-core/playwright@4.11.3
+
+      - name: Commit lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "build: lock browser test dependencies"
+          git push origin HEAD:quality/e2e-and-domain-design
