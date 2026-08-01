@@ -28,6 +28,7 @@ export function mountApp(root: HTMLElement): void {
   const navigationState = (): NavigationState => ({
     currentStepId: state.currentStepId,
     completedStepIds: state.completedStepIds,
+    returnStepId: state.returnStepId,
   });
 
   const applyNavigation = (navigation: NavigationState): void => {
@@ -51,7 +52,7 @@ export function mountApp(root: HTMLElement): void {
         ${renderRosaryMap(state.currentStepId, state.completedStepIds)}
       </div>
       ${renderPrayerSheet(step, state.mysterySet, {
-        atStart: currentIndex === 0,
+        atStart: currentIndex === 0 && state.returnStepId === null,
         atEnd: currentIndex === ROSARY_SEQUENCE.length - 1,
         rosaryComplete: complete,
       })}
