@@ -26,7 +26,7 @@ export default defineConfig({
   webServer: externalBaseUrl
     ? undefined
     : {
-        command: "npm run dev",
+        command: "npm run dev:e2e",
         url: localBaseUrl,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
