@@ -1,11 +1,12 @@
 import { expect, type Page, type TestInfo } from "@playwright/test";
 
 export async function openFreshRosary(page: Page): Promise<void> {
-  await page.addInitScript(() => {
+  await page.goto("./");
+  await page.evaluate(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
   });
-  await page.goto("./");
+  await page.reload();
   await page.waitForLoadState("networkidle");
   await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
 }
