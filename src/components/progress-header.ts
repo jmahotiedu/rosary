@@ -4,17 +4,18 @@ export function renderProgressHeader(
   totalSteps: number,
 ): string {
   const percent = Math.round(progress * 100);
+
   return `<header class="app-header">
-    <div>
-      <p class="eyebrow">Interactive prayer guide</p>
+    <div class="brand-block">
       <h1>Rosary</h1>
+      <p>Prayer guide</p>
     </div>
     <div class="progress-summary">
+      <p class="step-counter">Step ${currentStep} of ${totalSteps}</p>
       <button class="restart-button" type="button" data-action="restart">Start over</button>
-      <div class="progress-ring" style="--progress:${Math.round(progress * 360)}deg" aria-label="${percent} percent complete">
-        <span>${percent}%</span>
-      </div>
-      <p>Step ${currentStep} of ${totalSteps}</p>
     </div>
-  </header>`;
+  </header>
+  <div class="progress-track" role="progressbar" aria-label="Rosary completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}">
+    <span style="--progress:${percent}%"></span>
+  </div>`;
 }
