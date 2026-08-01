@@ -28,13 +28,21 @@ export async function clickRosaryStep(page: Page, stepId: string): Promise<void>
   expect(Number.isFinite(x), `Expected an x coordinate for ${stepId}`).toBeTruthy();
   expect(Number.isFinite(y), `Expected a y coordinate for ${stepId}`).toBeTruthy();
 
-  const bounds = await target.boundingBox();
-  expect(bounds, `Expected a rendered hit target for ${stepId}`).not.toBeNull();
+  const stage = page.locator("[data-rosary-stage]");
+  const stageBounds = await stage.boundingBox();
+  expect(stageBounds, "Expected the Rosary stage to have a bounding box").not.toBeNull();
 
-  // Dispatch through the actual bead button rather than page.mouse coordinates. This exercises
-  // the app's click handler consistently in both desktop Chromium and touch-emulated WebKit,
-  // while force avoids the decorative SVG layer interfering with Playwright's hit testing.
-  await target.click({ force: true });
+  const clientX = stageBounds!.x + (x / 390) * stageBounds!.width;
+  const clientY = stageBounds!.y + (y / 720) * stageBounds!.height;
+  const hasTouch = await page.evaluate(() => navigator.maxTouchPoints > 0);
+
+  // Exercise the same stage-level coordinate hit path used by real users. A mouse action is used
+  // for desktop Chromium and a genuine touchscreen tap for the iPhone WebKit project.
+  if (hasTouch) {
+    await page.touchscreen.tap(clientX, clientY);
+  } else {
+    await page.mouse.click(clientX, clientY);
+  }
 }
 
 export async function waitForSavedStep(page: Page, stepId: string): Promise<void> {
