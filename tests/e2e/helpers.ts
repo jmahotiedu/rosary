@@ -20,6 +20,7 @@ export async function reopenRosary(page: Page): Promise<void> {
 export async function clickRosaryStep(page: Page, stepId: string): Promise<void> {
   const target = page.locator(`[data-step-id="${stepId}"]`);
   await expect(target).toHaveCount(1);
+  await expect(target).toBeAttached();
 
   const style = await target.getAttribute("style");
   const x = Number(style?.match(/--x:([\d.]+)/)?.[1]);
@@ -27,14 +28,13 @@ export async function clickRosaryStep(page: Page, stepId: string): Promise<void>
   expect(Number.isFinite(x), `Expected an x coordinate for ${stepId}`).toBeTruthy();
   expect(Number.isFinite(y), `Expected a y coordinate for ${stepId}`).toBeTruthy();
 
-  const stage = page.locator("[data-rosary-stage]");
-  const bounds = await stage.boundingBox();
-  expect(bounds, "Expected the Rosary stage to have a bounding box").not.toBeNull();
+  const bounds = await target.boundingBox();
+  expect(bounds, `Expected a rendered hit target for ${stepId}`).not.toBeNull();
 
-  await page.mouse.click(
-    bounds!.x + (x / 390) * bounds!.width,
-    bounds!.y + (y / 720) * bounds!.height,
-  );
+  // Dispatch through the actual bead button rather than page.mouse coordinates. This exercises
+  // the app's click handler consistently in both desktop Chromium and touch-emulated WebKit,
+  // while force avoids the decorative SVG layer interfering with Playwright's hit testing.
+  await target.click({ force: true });
 }
 
 export async function waitForSavedStep(page: Page, stepId: string): Promise<void> {
