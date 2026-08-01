@@ -23,18 +23,18 @@ function visualMarkup(bead: BeadGeometry, active: boolean, complete: boolean): s
   const classes = stateClass(active, complete);
 
   if (bead.visualKind === "transition") {
-    return `<rect class="transition-visual${classes}" x="${bead.x - 4}" y="${bead.y - 4}" width="8" height="8" rx="2" transform="rotate(45 ${bead.x} ${bead.y})" />`;
+    return `<rect data-domain-part="transition" class="transition-visual${classes}" x="${bead.x - 4}" y="${bead.y - 4}" width="8" height="8" rx="2" transform="rotate(45 ${bead.x} ${bead.y})" />`;
   }
 
   if (bead.visualKind === "medallion") {
-    return `<path class="medallion-visual${classes}" d="M195 410 C213 420 215 438 195 450 C175 438 177 420 195 410 Z" />`;
+    return `<path data-domain-part="centerpiece" class="medallion-visual${classes}" d="M195 410 C213 420 215 438 195 450 C175 438 177 420 195 410 Z" />`;
   }
 
   if (bead.visualKind === "cross") {
-    return `<path class="cross-visual${classes}" d="M188 636 H202 V651 H222 V664 H202 V710 H188 V664 H168 V651 H188 Z" />`;
+    return `<path data-domain-part="crucifix" class="cross-visual${classes}" d="M188 636 H202 V651 H222 V664 H202 V710 H188 V664 H168 V651 H188 Z" />`;
   }
 
-  return `<circle class="bead-visual${bead.large ? " bead-visual--large" : ""}${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" />`;
+  return `<circle data-domain-part="bead" class="bead-visual${bead.large ? " bead-visual--large" : ""}${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" />`;
 }
 
 export function renderRosaryMap(currentStepId: string, completed: readonly string[]): string {
