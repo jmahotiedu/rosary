@@ -40,6 +40,16 @@ test("multiple inspection taps retain the original recovery location", () => {
   assert.equal(retreatStep(secondInspection).currentStepId, "opening-our-father");
 });
 
+test("tapping the original bead exits inspection mode immediately", () => {
+  const progressed = advanceStep(restartNavigation());
+  const inspected = selectStep(progressed, "decade-4-hail-7");
+  const returnedByTap = selectStep(inspected, "opening-our-father");
+
+  assert.equal(returnedByTap.currentStepId, "opening-our-father");
+  assert.equal(returnedByTap.inspectionReturnStepId, null);
+  assert.deepEqual(returnedByTap.completedStepIds, ["crucifix"]);
+});
+
 test("normal Previous moves one sequence step when not inspecting", () => {
   const progressed = advanceStep(advanceStep(restartNavigation()));
   const previous = retreatStep(progressed);
