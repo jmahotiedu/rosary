@@ -25,3 +25,25 @@ test("crowded loop taps choose the nearest bead instead of DOM order", () => {
 
   assert.equal(findNearestRosaryStepId(nearFirstX, nearFirstY), first.stepId);
 });
+
+test("opening Hail Mary beads follow the physical prayer direction", () => {
+  const opening = createRosaryGeometry()
+    .filter((point) => point.stepId.startsWith("opening-hail-"))
+    .sort((left, right) => left.stepId.localeCompare(right.stepId));
+
+  assert.deepEqual(
+    opening.map((point) => [point.stepId, point.y]),
+    [
+      ["opening-hail-1", 560],
+      ["opening-hail-2", 522],
+      ["opening-hail-3", 484],
+    ],
+  );
+});
+
+test("the crucifix has no decorative bead layered over it", () => {
+  const crucifix = createRosaryGeometry().find((point) => point.stepId === "crucifix");
+
+  assert.equal(crucifix?.visualKind, "cross");
+  assert.equal(crucifix?.radius, 0);
+});
