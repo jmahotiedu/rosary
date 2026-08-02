@@ -33,7 +33,7 @@ test("controls expose clear names and keyboard focus", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Next prayer" })).toBeEnabled();
 
   await page.keyboard.press("Tab");
-  await expect(page.getByRole("button", { name: "Start over" })).toBeFocused();
+  await expect(page.getByRole("combobox", { name: /mysteries/i })).toBeFocused();
 
   await expectNoHorizontalOverflow(page);
 });

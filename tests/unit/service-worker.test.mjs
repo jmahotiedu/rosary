@@ -5,8 +5,8 @@ import { readFile } from "node:fs/promises";
 test("service worker invalidates pre-recovery assets and refreshes navigation", async () => {
   const source = await readFile("public/sw.js", "utf8");
 
-  assert.match(source, /const CACHE_NAME = "rosary-v4"/);
-  assert.doesNotMatch(source, /const CACHE_NAME = "rosary-v3"/);
+  assert.match(source, /const CACHE_NAME = "rosary-v5"/);
+  assert.doesNotMatch(source, /const CACHE_NAME = "rosary-v4"/);
   assert.match(source, /keys\.filter\(\(key\) => key !== CACHE_NAME\)/);
   assert.match(source, /networkFirst/);
   assert.match(source, /staleWhileRevalidate/);

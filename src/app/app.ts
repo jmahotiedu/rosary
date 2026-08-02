@@ -10,7 +10,7 @@ import {
   type NavigationState,
 } from "../domain/progress";
 import type { MysterySetId } from "../domain/prayer-step";
-import { loadState, saveState } from "./persistence";
+import { createInitialState } from "./state";
 import { renderRosaryMap } from "../components/rosary-map";
 import {
   clientPointToViewBox,
@@ -22,7 +22,7 @@ import { renderProgressHeader } from "../components/progress-header";
 import { renderInstallPrompt } from "../components/install-prompt";
 
 export function mountApp(root: HTMLElement): void {
-  let state = loadState();
+  let state = createInitialState();
   let deferredPrompt: Event | null = null;
   let restartPending = false;
   let restoreFocusAction: string | null = null;
@@ -36,7 +36,6 @@ export function mountApp(root: HTMLElement): void {
   const applyNavigation = (navigation: NavigationState): void => {
     restartPending = false;
     state = { ...state, ...navigation };
-    saveState(state);
     render();
   };
 
@@ -66,12 +65,16 @@ export function mountApp(root: HTMLElement): void {
     const complete = isRosaryComplete(state.completedStepIds);
 
     root.innerHTML = `<div class="app-shell">
+      ${renderProgressHeader(
+        completedCount,
+        ROSARY_SEQUENCE.length,
+        restartPending,
+        renderMysterySelector(state.mysterySet),
+      )}
       <div class="top-panel">
-        ${renderProgressHeader(completedCount, ROSARY_SEQUENCE.length, restartPending)}
-        ${renderMysterySelector(state.mysterySet)}
         ${renderInstallPrompt(Boolean(deferredPrompt))}
-        <p class="instruction">Tap a bead to inspect. Previous recovers; Next marks the prayer complete.</p>
         ${renderRosaryMap(state.currentStepId, state.completedStepIds)}
+        <p class="instruction">Tap a bead to inspect. Previous recovers; Next marks the prayer complete.</p>
       </div>
       ${renderPrayerSheet(step, state.mysterySet, {
         atStart: currentIndex === 0 && state.inspectionReturnStepId === null,
@@ -137,7 +140,6 @@ export function mountApp(root: HTMLElement): void {
             .value as MysterySetId,
           mysterySelectionMode: "manual",
         };
-        saveState(state);
         render();
       });
 

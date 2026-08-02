@@ -120,9 +120,9 @@
 
 @media (min-width: 760px) {
   .prayer-sheet {
-    max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 110px);
     position: sticky;
-    top: 24px;
-    padding: 18px;
+    top: 18px;
+    padding: 18px 20px;
   }
 }

@@ -5,7 +5,7 @@
 - [ ] Every visible bead has a 44×44 tap target.
 - [ ] Opening, decade, transition, and final prayers are correct.
 - [ ] Mystery weekday mapping is correct.
-- [ ] Reload restores valid progress.
+- [ ] Reload starts a fresh Rosary; nothing persists between visits.
 - [ ] Offline reload succeeds after first load.
 - [ ] Keyboard focus is visible.
 - [ ] Reduced motion is respected.

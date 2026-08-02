@@ -2,6 +2,7 @@ export function renderProgressHeader(
   completedCount: number,
   totalSteps: number,
   restartPending: boolean,
+  mysterySelector: string,
 ): string {
   const confirm = restartPending
     ? `<div class="restart-confirm" role="group" aria-label="Confirm start over">
@@ -15,6 +16,7 @@ export function renderProgressHeader(
 
   return `<header class="app-header">
     <h1>Rosary</h1>
+    ${mysterySelector}
     <div class="progress-summary">
       <button class="restart-button" type="button" data-action="restart"${restartPending ? " hidden" : ""}>Start over</button>
       <p class="progress-count" data-progress-count>${completedCount} of ${totalSteps} prayers</p>

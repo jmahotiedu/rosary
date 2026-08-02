@@ -1,6 +1,6 @@
 # Rosary
 
-A mobile-first, installable Rosary PWA with a complete connected wooden Rosary, exact prayers, daily mysteries, direct bead inspection, sequential navigation, offline support, and saved progress.
+A mobile-first, installable Rosary PWA with a complete connected wooden Rosary, exact prayers, daily mysteries, direct bead inspection, sequential navigation, and offline support. Progress is session-only: leaving or reloading the site starts a fresh Rosary.
 
 ## Live site
 

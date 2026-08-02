@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
 import { ROSARY_SEQUENCE } from "../../src/data/rosary-sequence";
+import { getMysterySetForDate } from "../../src/domain/weekday-mysteries";
 import {
   attachFullPageScreenshot,
   clickRosaryStep,
   expectNoHorizontalOverflow,
   openFreshRosary,
   reopenRosary,
-  waitForSavedStep,
 } from "./helpers";
 
 test("an accidental jump returns to the exact pre-jump prayer", async ({ page }, testInfo) => {
@@ -42,19 +42,21 @@ test("tapping the return bead exits inspection mode immediately", async ({ page 
   await expect(page.locator(".is-complete")).toHaveCount(0);
 });
 
-test("recovery location survives reopening the app", async ({ page }) => {
+test("reopening the app resets inspection and progress to the crucifix", async ({ page }) => {
   await openFreshRosary(page);
   await page.getByRole("button", { name: "Next prayer" }).click();
   await expect(page.getByRole("heading", { name: "Opening Our Father" })).toBeVisible();
 
   await clickRosaryStep(page, "decade-4-hail-7");
   await expect(page.getByRole("heading", { name: "Hail Mary 7 of 10" })).toBeVisible();
-  await waitForSavedStep(page, "decade-4-hail-7");
-  await reopenRosary(page);
-  await expect(page.getByRole("heading", { name: "Hail Mary 7 of 10" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Previous" }).click();
-  await expect(page.getByRole("heading", { name: "Opening Our Father" })).toBeVisible();
+  await reopenRosary(page);
+  await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Previous" })).toBeDisabled();
+  await expect(page.locator(".is-complete")).toHaveCount(0);
+  await expect(page.locator("[data-progress-count]")).toHaveText(
+    `0 of ${ROSARY_SEQUENCE.length} prayers`,
+  );
 });
 
 test("normal Previous works at multiple sequence positions", async ({ page }) => {
@@ -72,23 +74,23 @@ test("normal Previous works at multiple sequence positions", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Opening Hail Mary 3 of 3" })).toBeVisible();
 });
 
-test("manual Mystery selection persists after reopening", async ({ page }) => {
+test("manual Mystery selection applies immediately and resets after reopening", async ({
+  page,
+}) => {
   await openFreshRosary(page);
 
   const selector = page.getByRole("combobox");
   await selector.selectOption("sorrowful");
   await expect(selector).toHaveValue("sorrowful");
-  await expect
-    .poll(async () => page.evaluate(() => localStorage.getItem("rosary:pwa:v1")))
-    .toContain('"mysterySet":"sorrowful"');
-
-  await reopenRosary(page);
-  await expect(page.getByRole("combobox")).toHaveValue("sorrowful");
 
   for (let index = 0; index < 5; index += 1) {
     await page.getByRole("button", { name: "Next prayer" }).click();
   }
   await expect(page.getByText("sorrowful mystery 1", { exact: false })).toBeVisible();
+
+  await reopenRosary(page);
+  await expect(page.getByRole("combobox")).toHaveValue(getMysterySetForDate(new Date()));
+  await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
 });
 
 test("direct selection of an early bead is non-destructive", async ({ page }) => {
@@ -162,19 +164,21 @@ test("the rendered Rosary has no unexplained center ellipse or crucifix bead", a
   await attachFullPageScreenshot(page, testInfo, "initial-rosary-render");
 });
 
-test("saved sequential progress restores after reopening", async ({ page }) => {
+test("sequential progress is discarded after reopening", async ({ page }) => {
   await openFreshRosary(page);
   for (let index = 0; index < 4; index += 1) {
     await page.getByRole("button", { name: "Next prayer" }).click();
   }
   await expect(page.getByRole("heading", { name: "Opening Hail Mary 3 of 3" })).toBeVisible();
-  await waitForSavedStep(page, "opening-hail-3");
+  expect(await page.locator(".is-complete").count()).toBeGreaterThan(0);
 
-  const completedBeforeReopen = await page.locator(".is-complete").count();
   await reopenRosary(page);
 
-  await expect(page.getByRole("heading", { name: "Opening Hail Mary 3 of 3" })).toBeVisible();
-  await expect(page.locator(".is-complete")).toHaveCount(completedBeforeReopen);
+  await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
+  await expect(page.locator(".is-complete")).toHaveCount(0);
+  await expect(page.locator("[data-progress-count]")).toHaveText(
+    `0 of ${ROSARY_SEQUENCE.length} prayers`,
+  );
 });
 
 test("the complete journey reaches final prayers and a true completed state", async ({
