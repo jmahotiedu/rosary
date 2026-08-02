@@ -23,7 +23,7 @@ function visualMarkup(bead: BeadGeometry, active: boolean, complete: boolean): s
   const classes = stateClass(active, complete);
 
   if (bead.visualKind === "transition") {
-    return `<circle data-domain-part="transition" class="bead-visual bead-visual--spacer${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" />`;
+    return `<circle data-domain-part="transition" class="knot-visual${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" />`;
   }
 
   if (bead.visualKind === "medallion") {

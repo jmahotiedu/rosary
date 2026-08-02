@@ -8,14 +8,27 @@
 
 .top-panel {
   min-width: 0;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.top-panel .instruction {
+  justify-self: center;
+  text-align: center;
 }
 
 .app-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
   padding: 2px 2px 4px;
+}
+
+.app-header .mystery-select {
+  order: 3;
+  flex: 1 1 100%;
 }
 
 .app-header h1 {
@@ -29,6 +42,7 @@
 }
 
 .progress-summary {
+  margin-left: auto;
   display: grid;
   justify-items: end;
   gap: 4px;
@@ -151,7 +165,7 @@
 
 .rosary-stage {
   position: relative;
-  width: min(100%, 390px);
+  width: min(100%, 360px, max(300px, calc((100dvh - 200px) * 0.5417)));
   aspect-ratio: 390 / 720;
   margin: auto;
   background: var(--surface);
@@ -181,6 +195,7 @@
 .rosary-cord line,
 .rosary-cord path,
 .bead-visual,
+.knot-visual,
 .medallion-visual,
 .cross-visual {
   vector-effect: non-scaling-stroke;
@@ -197,8 +212,18 @@
   stroke-width: 1.6;
 }
 
-.bead-visual--spacer {
-  stroke-width: 1;
+.knot-visual {
+  fill: var(--cord);
+  stroke: none;
+}
+
+.knot-visual.is-complete {
+  fill: var(--complete);
+}
+
+.knot-visual.is-active {
+  stroke: var(--focus);
+  stroke-width: 3;
 }
 
 .medallion-visual,
@@ -245,18 +270,34 @@
 
 @media (min-width: 760px) {
   .app-shell {
-    grid-template-columns: minmax(340px, 0.8fr) minmax(420px, 1.2fr);
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
     align-items: start;
-    padding: 24px;
+    gap: 14px 28px;
+    padding: 18px 28px calc(18px + var(--safe-bottom));
+  }
+
+  .app-header {
+    grid-column: 1 / -1;
+    flex-wrap: nowrap;
+  }
+
+  .app-header .mystery-select {
+    order: 0;
+    flex: 0 0 auto;
+  }
+
+  .restart-confirm {
+    grid-column: 1 / -1;
   }
 
   .top-panel {
     position: sticky;
-    top: 20px;
+    top: 18px;
   }
 
   .rosary-stage {
-    width: clamp(300px, calc((100dvh - 190px) * 0.5417), 440px);
-    max-width: 100%;
+    width: clamp(300px, calc((100dvh - 170px) * 0.5417), 400px);
+    margin: 0;
   }
 }

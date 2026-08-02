@@ -81,7 +81,7 @@ At minimum, exercise:
 - direct selection of an early and late bead,
 - accidental selection followed by recovery,
 - Start over,
-- reload with saved progress,
+- reload resets to a fresh Rosary (progress is session-only),
 - Mystery selection,
 - final prayers,
 - no horizontal overflow,

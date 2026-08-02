@@ -9,8 +9,9 @@ import { viewBoxPointToClient } from "../../src/components/rosary-geometry";
  */
 export async function openFreshRosary(page: Page): Promise<void> {
   await page.goto("./", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
   await settleAfterServiceWorker(page);
+  // Assert only after the service-worker activation/reload cycle has settled; asserting
+  // earlier races the one-time controllerchange reload, which blanks the page mid-poll.
   await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
 }
 
@@ -52,7 +53,7 @@ async function settleAfterServiceWorker(page: Page): Promise<void> {
 }
 
 
-/** Reopen the app without clearing persisted progress. */
+/** Reopen the app; progress is session-only, so a fresh Rosary is expected. */
 export async function reopenRosary(page: Page): Promise<void> {
   await page.goto("./", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".prayer-sheet h2")).toBeVisible();
@@ -94,14 +95,6 @@ export async function clickRosaryStep(page: Page, stepId: string): Promise<void>
   } else {
     await page.mouse.click(point!.clientX, point!.clientY);
   }
-}
-
-export async function waitForSavedStep(page: Page, stepId: string): Promise<void> {
-  await expect
-    .poll(async () =>
-      page.evaluate(() => window.localStorage.getItem("rosary:pwa:v1")),
-    )
-    .toContain(`"currentStepId":"${stepId}"`);
 }
 
 export async function attachFullPageScreenshot(

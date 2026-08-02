@@ -9,7 +9,7 @@ This checklist covers the failures found during the first live usability pass.
 - Previous works immediately after a direct jump.
 - Next marks only the prayer being left as complete.
 - Start over clears selection progress after confirmation.
-- Reload restores only explicitly completed prayers.
+- Reload starts a fresh Rosary; completed prayers are not kept between visits.
 
 ## Opening strand
 
