@@ -10,7 +10,47 @@ import { viewBoxPointToClient } from "../../src/components/rosary-geometry";
 export async function openFreshRosary(page: Page): Promise<void> {
   await page.goto("./", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
+  await settleAfterServiceWorker(page);
+  await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
 }
+
+/**
+ * First visit can register a service worker, claim clients, and reload once.
+ * Wait until that activation cycle finishes so axe/UI assertions are not mid-navigation.
+ */
+async function settleAfterServiceWorker(page: Page): Promise<void> {
+  await page
+    .evaluate(async () => {
+      if (!("serviceWorker" in navigator)) return;
+
+      await navigator.serviceWorker.ready;
+
+      await new Promise<void>((resolve) => {
+        let settled = false;
+        const finish = (): void => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timer);
+          resolve();
+        };
+
+        const timer = window.setTimeout(finish, 900);
+        navigator.serviceWorker.addEventListener(
+          "controllerchange",
+          () => {
+            // A reload is imminent; keep waiting for the quiet timeout after navigation.
+          },
+          { once: true },
+        );
+      });
+    })
+    .catch(() => {
+      // Navigation during evaluate is itself evidence the page is settling.
+    });
+
+  await page.waitForLoadState("domcontentloaded").catch(() => undefined);
+}
+
 
 /** Reopen the app without clearing persisted progress. */
 export async function reopenRosary(page: Page): Promise<void> {

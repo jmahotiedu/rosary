@@ -2,8 +2,8 @@ import { ROSARY_SEQUENCE } from "../data/rosary-sequence";
 import { getStep, getStepIndex } from "../domain/sequence";
 import {
   advanceStep,
-  getCompletionProgress,
   isRosaryComplete,
+  normalizeCompletedStepIds,
   restartNavigation,
   retreatStep,
   selectStep,
@@ -24,6 +24,8 @@ import { renderInstallPrompt } from "../components/install-prompt";
 export function mountApp(root: HTMLElement): void {
   let state = loadState();
   let deferredPrompt: Event | null = null;
+  let restartPending = false;
+  let restoreFocusAction: string | null = null;
 
   const navigationState = (): NavigationState => ({
     currentStepId: state.currentStepId,
@@ -32,23 +34,43 @@ export function mountApp(root: HTMLElement): void {
   });
 
   const applyNavigation = (navigation: NavigationState): void => {
+    restartPending = false;
     state = { ...state, ...navigation };
     saveState(state);
     render();
   };
 
+  const rememberFocus = (): void => {
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement) || !root.contains(active)) {
+      restoreFocusAction = null;
+      return;
+    }
+    restoreFocusAction = active.dataset.action ?? null;
+  };
+
+  const restoreFocus = (): void => {
+    if (!restoreFocusAction) return;
+    const target = root.querySelector<HTMLElement>(
+      `[data-action="${restoreFocusAction}"]`,
+    );
+    target?.focus();
+    restoreFocusAction = null;
+  };
+
   const render = (): void => {
+    rememberFocus();
     const step = getStep(state.currentStepId);
     const currentIndex = getStepIndex(state.currentStepId);
-    const completion = getCompletionProgress(state.completedStepIds);
+    const completedCount = normalizeCompletedStepIds(state.completedStepIds).length;
     const complete = isRosaryComplete(state.completedStepIds);
 
     root.innerHTML = `<div class="app-shell">
       <div class="top-panel">
-        ${renderProgressHeader(completion, currentIndex + 1, ROSARY_SEQUENCE.length)}
+        ${renderProgressHeader(completedCount, ROSARY_SEQUENCE.length, restartPending)}
         ${renderMysterySelector(state.mysterySet)}
-        ${renderInstallPrompt()}
-        <p class="instruction">Tap a bead to inspect it. Previous returns to where you were; Next prayer marks the displayed prayer complete.</p>
+        ${renderInstallPrompt(Boolean(deferredPrompt))}
+        <p class="instruction">Tap a bead to inspect. Previous recovers; Next marks the prayer complete.</p>
         ${renderRosaryMap(state.currentStepId, state.completedStepIds)}
       </div>
       ${renderPrayerSheet(step, state.mysterySet, {
@@ -59,6 +81,7 @@ export function mountApp(root: HTMLElement): void {
     </div>`;
 
     wire();
+    restoreFocus();
   };
 
   const wire = (): void => {
@@ -90,10 +113,19 @@ export function mountApp(root: HTMLElement): void {
     });
 
     root.querySelector('[data-action="restart"]')?.addEventListener("click", () => {
-      const confirmed = window.confirm(
-        "Start the Rosary over and clear completed prayers?",
-      );
-      if (confirmed) applyNavigation(restartNavigation());
+      restartPending = true;
+      render();
+      root.querySelector<HTMLElement>('[data-action="restart-confirm"]')?.focus();
+    });
+
+    root.querySelector('[data-action="restart-cancel"]')?.addEventListener("click", () => {
+      restartPending = false;
+      render();
+      root.querySelector<HTMLElement>('[data-action="restart"]')?.focus();
+    });
+
+    root.querySelector('[data-action="restart-confirm"]')?.addEventListener("click", () => {
+      applyNavigation(restartNavigation());
     });
 
     root
@@ -113,7 +145,6 @@ export function mountApp(root: HTMLElement): void {
       '[data-action="install"]',
     );
     if (deferredPrompt && install) {
-      install.hidden = false;
       install.addEventListener("click", async () => {
         const promptEvent = deferredPrompt as Event & {
           prompt: () => Promise<void>;

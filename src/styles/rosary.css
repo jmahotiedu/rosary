@@ -3,7 +3,7 @@
   margin: auto;
   padding: max(12px, var(--safe-top)) 12px calc(18px + var(--safe-bottom));
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .top-panel {
@@ -12,83 +12,84 @@
 
 .app-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 4px 4px 8px;
-}
-
-.eyebrow {
-  margin: 0 0 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: #755834;
+  padding: 2px 2px 4px;
 }
 
 .app-header h1 {
   margin: 0;
-  font-family: Georgia, serif;
-  font-size: clamp(2rem, 9vw, 3.2rem);
-  line-height: 1;
+  font-family: var(--font-ui);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .progress-summary {
   display: grid;
-  grid-template-columns: auto 54px;
-  grid-template-areas:
-    "restart ring"
-    "count ring";
-  align-items: center;
   justify-items: end;
-  column-gap: 9px;
+  gap: 4px;
+  text-align: right;
 }
 
 .restart-button {
-  grid-area: restart;
   border: 0;
   padding: 2px 0;
   background: transparent;
   color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 800;
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
 }
 
-.progress-summary > p {
-  grid-area: count;
+.progress-count {
   margin: 0;
   color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 750;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
 }
 
-.progress-ring {
-  grid-area: ring;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: conic-gradient(var(--gold) var(--progress), rgb(104 71 47 / 12%) 0);
-  position: relative;
-}
-
-.progress-ring::after {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  border-radius: 50%;
+.restart-confirm {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   background: var(--surface);
 }
 
-.progress-ring span {
-  z-index: 1;
-  font-size: 0.7rem;
-  font-weight: 800;
+.restart-confirm p {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.restart-confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.restart-confirm-actions button {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.restart-confirm-actions .primary {
+  border-color: var(--wood-dark);
+  background: var(--wood-dark);
+  color: #fff;
 }
 
 .mystery-select {
@@ -96,17 +97,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  background: rgb(255 253 248 / 78%);
-  border: 1px solid rgb(104 71 47 / 16%);
-  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 8px 10px;
 }
 
 .mystery-select span {
-  font-size: 0.76rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--muted);
 }
 
@@ -115,14 +114,39 @@
   border: 0;
   background: transparent;
   color: var(--ink);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .instruction {
-  margin: 8px 4px 6px;
+  margin: 4px 2px 2px;
   color: var(--muted);
-  font-size: 0.82rem;
-  line-height: 1.35;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.install-button,
+.install-hint {
+  width: 100%;
+  margin-top: 8px;
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.install-button {
+  border: 0;
+  background: var(--wood-dark);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.install-hint {
+  margin: 8px 0 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
 }
 
 .rosary-stage {
@@ -130,12 +154,9 @@
   width: min(100%, 390px);
   aspect-ratio: 390 / 720;
   margin: auto;
-  background:
-    radial-gradient(circle at 50% 35%, rgb(193 138 88 / 10%), transparent 44%),
-    rgb(255 253 248 / 72%);
-  border: 1px solid rgb(104 71 47 / 15%);
-  border-radius: 26px;
-  box-shadow: var(--shadow);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   overflow: hidden;
   cursor: pointer;
   user-select: none;
@@ -155,15 +176,13 @@
   stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 1px 1px rgb(39 24 14 / 22%));
 }
 
 .rosary-cord line,
 .rosary-cord path,
 .bead-visual,
 .medallion-visual,
-.cross-visual,
-.transition-visual {
+.cross-visual {
   vector-effect: non-scaling-stroke;
 }
 
@@ -171,12 +190,15 @@
   fill: url(#wood-bead);
   stroke: #8b5b34;
   stroke-width: 1.25;
-  filter: drop-shadow(0 2px 2px rgb(45 29 17 / 30%));
-  transition: stroke-width 120ms ease, filter 120ms ease;
+  transition: stroke-width 120ms ease;
 }
 
 .bead-visual--large {
   stroke-width: 1.6;
+}
+
+.bead-visual--spacer {
+  stroke-width: 1;
 }
 
 .medallion-visual,
@@ -184,30 +206,20 @@
   fill: url(#wood-dark);
   stroke: #8a5833;
   stroke-width: 1.6;
-  filter: drop-shadow(0 2px 2px rgb(45 29 17 / 32%));
-}
-
-.transition-visual {
-  fill: #b88b43;
-  stroke: #7a5a28;
-  stroke-width: 1;
 }
 
 .bead-visual.is-complete,
 .medallion-visual.is-complete,
-.cross-visual.is-complete,
-.transition-visual.is-complete {
-  stroke: #74806f;
+.cross-visual.is-complete {
+  stroke: var(--complete);
   stroke-width: 3;
 }
 
 .bead-visual.is-active,
 .medallion-visual.is-active,
-.cross-visual.is-active,
-.transition-visual.is-active {
+.cross-visual.is-active {
   stroke: var(--focus);
   stroke-width: 4;
-  filter: drop-shadow(0 0 4px rgb(47 107 154 / 45%)) drop-shadow(0 3px 3px rgb(45 29 17 / 28%));
 }
 
 .bead-target {
@@ -229,17 +241,6 @@
 .bead-target:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
-}
-
-.install-button {
-  width: 100%;
-  margin-top: 8px;
-  border: 0;
-  border-radius: 12px;
-  padding: 10px;
-  background: var(--wood-dark);
-  color: #fff;
-  font-weight: 800;
 }
 
 @media (min-width: 760px) {

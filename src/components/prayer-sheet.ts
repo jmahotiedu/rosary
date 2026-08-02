@@ -8,6 +8,15 @@ interface PrayerSheetNavigation {
   readonly rosaryComplete: boolean;
 }
 
+function renderPrayerParagraphs(text: string): string {
+  return text
+    .split(/\n\n+/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .map((paragraph) => `<p>${paragraph}</p>`)
+    .join("");
+}
+
 export function renderPrayerSheet(
   step: PrayerStep,
   set: MysterySetId,
@@ -21,10 +30,11 @@ export function renderPrayerSheet(
       : "Finish Rosary"
     : "Next prayer";
 
-  return `<section class="prayer-sheet" aria-live="polite">
-    <div class="sheet-handle" aria-hidden="true"></div>
-    <p class="step-location">${step.location}</p>
-    <h2>${step.label}</h2>
+  return `<section class="prayer-sheet">
+    <div class="step-status" aria-live="polite">
+      <p class="step-location">${step.location}</p>
+      <h2>${step.label}</h2>
+    </div>
     ${
       mystery
         ? `<aside class="mystery-card"><p>${set} mystery ${step.mysteryIndex! + 1}</p><h3>${mystery.name}</h3><span>${mystery.meditation}</span></aside>`
@@ -34,7 +44,7 @@ export function renderPrayerSheet(
       ${step.prayerIds
         .map((id) => {
           const prayer = PRAYERS[id];
-          return `<article class="prayer"><div class="prayer-heading"><h3>${prayer.title}</h3><span>Say once</span></div><p>${prayer.text.replaceAll("\n\n", "</p><p>")}</p></article>`;
+          return `<article class="prayer"><div class="prayer-heading"><h3>${prayer.title}</h3><span>Say once</span></div>${renderPrayerParagraphs(prayer.text)}</article>`;
         })
         .join("")}
     </div>

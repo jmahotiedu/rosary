@@ -2,18 +2,27 @@ import { execFileSync } from "node:child_process";
 import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 
 const outputDirectory = "dist";
 const temporaryDirectory = ".build";
-const compiler = process.platform === "win32" ? "tsc.cmd" : "tsc";
+const compiler = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "node_modules",
+  "typescript",
+  "bin",
+  "tsc",
+);
 
 await rm(outputDirectory, { recursive: true, force: true });
 await rm(temporaryDirectory, { recursive: true, force: true });
 await mkdir(outputDirectory, { recursive: true });
 
 execFileSync(
-  compiler,
+  process.execPath,
   [
+    compiler,
     "--outDir",
     temporaryDirectory,
     "--noEmit",
