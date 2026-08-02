@@ -6,6 +6,8 @@ For any frontend, interaction, responsive, accessibility, or visual change, read
 
 `.agents/skills/rosary-product-ux/SKILL.md`
 
+Also follow `DESIGN.md` (banned tokens, type roles, chapel-desk surfaces).
+
 Do not use a generic frontend-design skill as the sole design or acceptance rubric.
 
 ## Product invariants

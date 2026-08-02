@@ -18,7 +18,9 @@ test("an accidental jump returns to the exact pre-jump prayer", async ({ page },
 
   await clickRosaryStep(page, "decade-5-hail-10");
   await expect(page.getByRole("heading", { name: "Hail Mary 10 of 10" })).toBeVisible();
-  await expect(page.locator(".progress-ring span")).not.toHaveText("100%");
+  await expect(page.locator("[data-progress-count]")).not.toHaveText(
+    `${ROSARY_SEQUENCE.length} of ${ROSARY_SEQUENCE.length} prayers`,
+  );
 
   await page.getByRole("button", { name: "Previous" }).click();
   await expect(page.getByRole("heading", { name: "Opening Hail Mary 1 of 3" })).toBeVisible();
@@ -190,7 +192,9 @@ test("the complete journey reaches final prayers and a true completed state", as
   await page.getByRole("button", { name: "Finish Rosary" }).click();
 
   await expect(page.getByRole("button", { name: "Rosary complete" })).toBeDisabled();
-  await expect(page.locator(".progress-ring span")).toHaveText("100%");
+  await expect(page.locator("[data-progress-count]")).toHaveText(
+    `${ROSARY_SEQUENCE.length} of ${ROSARY_SEQUENCE.length} prayers`,
+  );
   await attachFullPageScreenshot(page, testInfo, "completed-rosary");
 
   await page.getByRole("button", { name: "Previous" }).click();
@@ -205,10 +209,15 @@ test("start over clears completed prayers and returns to the crucifix", async ({
   await page.getByRole("button", { name: "Next prayer" }).click();
   await expect(page.locator(".is-complete")).toHaveCount(2);
 
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Start over" }).click();
+  await page
+    .getByRole("group", { name: "Confirm start over" })
+    .getByRole("button", { name: "Start over" })
+    .click();
 
   await expect(page.getByRole("heading", { name: "Begin the Rosary" })).toBeVisible();
   await expect(page.locator(".is-complete")).toHaveCount(0);
-  await expect(page.locator(".progress-ring span")).toHaveText("0%");
+  await expect(page.locator("[data-progress-count]")).toHaveText(
+    `0 of ${ROSARY_SEQUENCE.length} prayers`,
+  );
 });

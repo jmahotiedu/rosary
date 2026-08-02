@@ -164,7 +164,7 @@ test("an active v2 installed client upgrades, reloads, and uses recovery behavio
         return [];
       }
     })
-    .toContain("rosary-v3");
+    .toContain("rosary-v4");
   await expect
     .poll(async () => {
       try {

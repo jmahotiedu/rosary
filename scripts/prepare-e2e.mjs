@@ -1,10 +1,16 @@
 import { execFileSync } from "node:child_process";
 import { cp, mkdir } from "node:fs/promises";
+import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+const buildScript = path.join(root, "scripts", "build.mjs");
 
-execFileSync(npm, ["run", "build"], { stdio: "inherit" });
+execFileSync(process.execPath, [buildScript], {
+  stdio: "inherit",
+  cwd: root,
+});
 
 await mkdir("dist/test-fixtures", { recursive: true });
 // A worker can only claim scopes at or below its own directory unless the server adds a

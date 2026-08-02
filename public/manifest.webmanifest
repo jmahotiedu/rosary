@@ -1,12 +1,12 @@
 {
-  "name": "Rosary \u2014 Bead by Bead",
+  "name": "Rosary",
   "short_name": "Rosary",
   "description": "A complete interactive Rosary prayer guide.",
   "start_url": "/rosary/",
   "scope": "/rosary/",
   "display": "standalone",
-  "background_color": "#f5efe4",
-  "theme_color": "#2f2118",
+  "background_color": "#ebe8e1",
+  "theme_color": "#3f2a1d",
   "icons": [
     {
       "src": "/rosary/icons/icon-192.png",
