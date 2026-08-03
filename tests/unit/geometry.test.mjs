@@ -145,16 +145,19 @@ test("the strand runs centerpiece to crucifix in physical prayer order", () => {
   assert.ok(y("opening-our-father") < y("crucifix"));
 });
 
-test("the fifth decade's close knot rests on the left cord to the centerpiece", () => {
+test("every decade-close knot hugs its decade's last Hail Mary bead", () => {
   const geometry = createRosaryGeometry();
-  const knot = geometry.find((point) => point.stepId === "decade-5-close");
-  const leftEnd = geometry.find((point) => point.stepId === "decade-5-hail-10");
-  const centerpiece = geometry.find((point) => point.stepId === "opening-glory");
-
-  const expectedX = (leftEnd.x + centerpiece.x) / 2;
-  const expectedY = (leftEnd.y + centerpiece.y) / 2;
-  assert.ok(Math.abs(knot.x - expectedX) < 1e-9, "knot x on the left cord");
-  assert.ok(Math.abs(knot.y - expectedY) < 1e-9, "knot y on the left cord");
+  for (let decade = 1; decade <= 5; decade += 1) {
+    const knot = geometry.find((point) => point.stepId === `decade-${decade}-close`);
+    const lastBead = geometry.find(
+      (point) => point.stepId === `decade-${decade}-hail-10`,
+    );
+    const distance = Math.hypot(knot.x - lastBead.x, knot.y - lastBead.y);
+    assert.ok(
+      distance <= 14,
+      `decade ${decade} knot floats ${distance.toFixed(1)}px from its last bead`,
+    );
+  }
 });
 
 test("the cord joins the loop ends to the centerpiece without closing the ring", () => {

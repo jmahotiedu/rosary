@@ -132,22 +132,32 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
 
   beads.push(...loop);
 
-  // Cord knots between decades mark the Glory Be / Fatima Prayer that closes
-  // each decade. Decades one through four close between the last Hail Mary and
-  // the next Our Father bead.
-  for (let decade = 1; decade <= 4; decade++) {
-    const hailTen = loop[decade * 11 - 1]!;
-    const nextOurFather = loop[decade * 11]!;
-    beads.push({
-      x: (hailTen.x + nextOurFather.x) / 2,
-      y: (hailTen.y + nextOurFather.y) / 2,
+  // Cord knots mark the Glory Be / Fatima Prayer that closes each decade. Like
+  // the retaining knots on a knotted-cord rosary, each one hugs the decade's
+  // last Hail Mary bead, tied along the cord toward whatever comes next.
+  const knotOffset = 10;
+  const placeKnot = (
+    from: Point,
+    toward: Point,
+    decade: number,
+  ): BeadGeometry => {
+    const dx = toward.x - from.x;
+    const dy = toward.y - from.y;
+    const length = Math.hypot(dx, dy);
+    return {
+      x: from.x + (dx * knotOffset) / length,
+      y: from.y + (dy * knotOffset) / length,
       radius: 3.5,
       hitRadius: 15,
       large: false,
       visualKind: "transition",
       stepId: `decade-${decade}-close`,
       decade,
-    });
+    };
+  };
+
+  for (let decade = 1; decade <= 4; decade++) {
+    beads.push(placeKnot(loop[decade * 11 - 1]!, loop[decade * 11]!, decade));
   }
 
   const centerpiece = { x: 195, y: 432 };
@@ -161,19 +171,9 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
     stepId: "opening-glory",
   });
 
-  // The fifth decade closes on the left cord running from the loop's left end
-  // down to the centerpiece.
-  const leftLoopEnd = loop[54]!;
-  beads.push({
-    x: (leftLoopEnd.x + centerpiece.x) / 2,
-    y: (leftLoopEnd.y + centerpiece.y) / 2,
-    radius: 3.5,
-    hitRadius: 15,
-    large: false,
-    visualKind: "transition",
-    stepId: "decade-5-close",
-    decade: 5,
-  });
+  // The fifth decade closes against its last bead on the left cord down to
+  // the centerpiece.
+  beads.push(placeKnot(loop[54]!, centerpiece, 5));
 
   const openingHailMaryPositions = [560, 522, 484];
   openingHailMaryPositions.forEach((y, index) => {
