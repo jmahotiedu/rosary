@@ -98,12 +98,20 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
   const beads: BeadGeometry[] = [];
   const loop: BeadGeometry[] = [];
   const centerX = 195;
-  const centerY = 220;
-  const radiusX = 142;
-  const radiusY = 170;
+  const centerY = 215;
+  const radiusX = 160;
+  const radiusY = 185;
+
+  // The loop is open: its two ends flank the centerpiece below, like a real
+  // rosary, instead of closing into a ring. The gap is symmetric about straight
+  // down (angle π/2), so decade 1 begins at the right end and decade 5 closes
+  // at the left end.
+  const gapHalfAngle = (22.5 * Math.PI) / 180;
+  const startAngle = Math.PI / 2 - gapHalfAngle;
+  const arcSpan = 2 * Math.PI - 2 * gapHalfAngle;
 
   for (let index = 0; index < 55; index++) {
-    const angle = Math.PI / 2 - (index * 2 * Math.PI) / 55;
+    const angle = startAngle - (index * arcSpan) / 54;
     const decade = Math.floor(index / 11) + 1;
     const position = index % 11;
     loop.push({
@@ -124,9 +132,12 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
 
   beads.push(...loop);
 
-  for (let decade = 1; decade <= 5; decade++) {
-    const hailTen = loop[(decade - 1) * 11 + 10]!;
-    const nextOurFather = loop[(decade * 11) % loop.length]!;
+  // Cord knots between decades mark the Glory Be / Fatima Prayer that closes
+  // each decade. Decades one through four close between the last Hail Mary and
+  // the next Our Father bead.
+  for (let decade = 1; decade <= 4; decade++) {
+    const hailTen = loop[decade * 11 - 1]!;
+    const nextOurFather = loop[decade * 11]!;
     beads.push({
       x: (hailTen.x + nextOurFather.x) / 2,
       y: (hailTen.y + nextOurFather.y) / 2,
@@ -139,14 +150,29 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
     });
   }
 
+  const centerpiece = { x: 195, y: 432 };
   beads.push({
-    x: 195,
-    y: 430,
-    radius: 14,
+    x: centerpiece.x,
+    y: centerpiece.y,
+    radius: 13,
     hitRadius: 24,
     large: true,
     visualKind: "medallion",
     stepId: "opening-glory",
+  });
+
+  // The fifth decade closes on the left cord running from the loop's left end
+  // down to the centerpiece.
+  const leftLoopEnd = loop[54]!;
+  beads.push({
+    x: (leftLoopEnd.x + centerpiece.x) / 2,
+    y: (leftLoopEnd.y + centerpiece.y) / 2,
+    radius: 3.5,
+    hitRadius: 15,
+    large: false,
+    visualKind: "transition",
+    stepId: "decade-5-close",
+    decade: 5,
   });
 
   const openingHailMaryPositions = [560, 522, 484];

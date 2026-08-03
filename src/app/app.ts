@@ -74,7 +74,7 @@ export function mountApp(root: HTMLElement): void {
       <div class="top-panel">
         ${renderInstallPrompt(Boolean(deferredPrompt))}
         ${renderRosaryMap(state.currentStepId, state.completedStepIds)}
-        <p class="instruction">Tap a bead to inspect. Previous recovers; Next marks the prayer complete.</p>
+        <p class="instruction">Tap any bead to see its prayer — Next marks it complete.</p>
       </div>
       ${renderPrayerSheet(step, state.mysterySet, {
         atStart: currentIndex === 0 && state.inspectionReturnStepId === null,

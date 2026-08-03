@@ -86,7 +86,9 @@ test("manual Mystery selection applies immediately and resets after reopening", 
   for (let index = 0; index < 5; index += 1) {
     await page.getByRole("button", { name: "Next prayer" }).click();
   }
-  await expect(page.getByText("sorrowful mystery 1", { exact: false })).toBeVisible();
+  await expect(page.getByText("First Sorrowful Mystery")).toBeVisible();
+  await expect(page.getByText("The Agony in the Garden")).toBeVisible();
+  await expect(page.getByText("Matthew 26:36–46")).toBeVisible();
 
   await reopenRosary(page);
   await expect(page.getByRole("combobox")).toHaveValue(getMysterySetForDate(new Date()));
@@ -192,6 +194,10 @@ test("the complete journey reaches final prayers and a true completed state", as
   }
 
   await expect(page.getByRole("heading", { name: "Conclude the Rosary" })).toBeVisible();
+  await expect(page.getByText("V. Pray for us, O holy Mother of God.")).toBeVisible();
+  await expect(
+    page.getByText("R. That we may be made worthy of the promises of Christ."),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Finish Rosary" })).toBeEnabled();
   await page.getByRole("button", { name: "Finish Rosary" }).click();
 
@@ -204,6 +210,31 @@ test("the complete journey reaches final prayers and a true completed state", as
   await page.getByRole("button", { name: "Previous" }).click();
   await expect(page.getByRole("heading", { name: "Complete decade 5" })).toBeVisible();
   await attachFullPageScreenshot(page, testInfo, "completed-rosary-previous-recovery");
+});
+
+test("the active crucifix keeps a warm treatment and reserves focus blue for keyboards", async ({
+  page,
+}) => {
+  await openFreshRosary(page);
+
+  const tones = await page.evaluate(() => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    const probe = document.createElement("div");
+    document.body.appendChild(probe);
+    const normalize = (token: string): string => {
+      probe.style.color = rootStyle.getPropertyValue(token);
+      return getComputedStyle(probe).color;
+    };
+    const focusBlue = normalize("--focus");
+    const gold = normalize("--gold");
+    probe.remove();
+
+    const cross = document.querySelector(".cross-visual");
+    return { focusBlue, gold, activeStroke: getComputedStyle(cross!).stroke };
+  });
+
+  expect(tones.activeStroke).not.toBe(tones.focusBlue);
+  expect(tones.activeStroke).toBe(tones.gold);
 });
 
 test("start over clears completed prayers and returns to the crucifix", async ({ page }) => {

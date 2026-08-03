@@ -222,7 +222,7 @@
 }
 
 .knot-visual.is-active {
-  stroke: var(--focus);
+  stroke: var(--gold);
   stroke-width: 3;
 }
 
@@ -231,6 +231,18 @@
   fill: url(#wood-dark);
   stroke: #8a5833;
   stroke-width: 1.6;
+}
+
+.medallion-bail {
+  fill: none;
+  stroke: var(--cord);
+  stroke-width: 2;
+}
+
+.medallion-inner {
+  fill: none;
+  stroke: rgba(215, 165, 117, 0.55);
+  stroke-width: 1.1;
 }
 
 .bead-visual.is-complete,
@@ -243,8 +255,9 @@
 .bead-visual.is-active,
 .medallion-visual.is-active,
 .cross-visual.is-active {
-  stroke: var(--focus);
-  stroke-width: 4;
+  stroke: var(--gold);
+  stroke-width: 3.5;
+  filter: drop-shadow(0 0 5px rgb(181 138 58 / 45%));
 }
 
 .bead-target {

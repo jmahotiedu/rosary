@@ -7,6 +7,7 @@ import {
   findNearestRosaryStepId,
   viewBoxPointToClient,
 } from "../../dist/components/rosary-geometry.js";
+import { renderRosaryMap } from "../../dist/components/rosary-map.js";
 
 function assertClose(actual, expected, message) {
   assert.ok(Math.abs(actual - expected) < 1e-9, `${message}: ${actual} !== ${expected}`);
@@ -86,6 +87,90 @@ test("viewBox and browser coordinates round-trip through vertical letterboxing",
     bounds,
   );
   assert.deepEqual(viewBoxPoint, { x: 0, y: 0 });
+});
+
+test("the loop is open: its widest angular gap flanks the centerpiece", () => {
+  const loopCenter = { x: 195, y: 215 };
+  const loop = createRosaryGeometry().filter(
+    (point) => point.visualKind === "bead" && point.stepId.startsWith("decade-"),
+  );
+  assert.equal(loop.length, 55);
+
+  const angles = loop
+    .map((point) => Math.atan2(point.y - loopCenter.y, point.x - loopCenter.x))
+    .sort((left, right) => left - right);
+  const spans = angles.map((angle, index) => {
+    const next = angles[(index + 1) % angles.length];
+    const span =
+      index === angles.length - 1 ? next + 2 * Math.PI - angle : next - angle;
+    return { angle, span };
+  });
+  const widest = spans.reduce((a, b) => (b.span > a.span ? b : a));
+  const typical = [...spans].sort((a, b) => a.span - b.span)[27];
+
+  assert.ok(
+    widest.span > typical.span * 3,
+    `widest gap ${widest.span} should dwarf typical ${typical.span}`,
+  );
+  const straightDown = Math.PI / 2;
+  assert.ok(
+    widest.angle < straightDown && widest.angle + widest.span > straightDown,
+    "the gap must open toward the centerpiece below the loop",
+  );
+});
+
+test("decade one starts at the right loop end and decade five ends at the left", () => {
+  const geometry = createRosaryGeometry();
+  const firstOurFather = geometry.find(
+    (point) => point.stepId === "decade-1-our-father",
+  );
+  const lastHail = geometry.find((point) => point.stepId === "decade-5-hail-10");
+
+  assert.ok(firstOurFather.x > 195, "decade 1 begins right of the centerpiece");
+  assert.ok(lastHail.x < 195, "decade 5 ends left of the centerpiece");
+  assert.ok(
+    Math.abs(firstOurFather.y - lastHail.y) < 1,
+    "the two loop ends sit level",
+  );
+});
+
+test("the strand runs centerpiece to crucifix in physical prayer order", () => {
+  const geometry = createRosaryGeometry();
+  const y = (id) => geometry.find((point) => point.stepId === id).y;
+
+  assert.ok(y("opening-glory") < y("opening-hail-3"));
+  assert.ok(y("opening-hail-3") < y("opening-hail-2"));
+  assert.ok(y("opening-hail-2") < y("opening-hail-1"));
+  assert.ok(y("opening-hail-1") < y("opening-our-father"));
+  assert.ok(y("opening-our-father") < y("crucifix"));
+});
+
+test("the fifth decade's close knot rests on the left cord to the centerpiece", () => {
+  const geometry = createRosaryGeometry();
+  const knot = geometry.find((point) => point.stepId === "decade-5-close");
+  const leftEnd = geometry.find((point) => point.stepId === "decade-5-hail-10");
+  const centerpiece = geometry.find((point) => point.stepId === "opening-glory");
+
+  const expectedX = (leftEnd.x + centerpiece.x) / 2;
+  const expectedY = (leftEnd.y + centerpiece.y) / 2;
+  assert.ok(Math.abs(knot.x - expectedX) < 1e-9, "knot x on the left cord");
+  assert.ok(Math.abs(knot.y - expectedY) < 1e-9, "knot y on the left cord");
+});
+
+test("the cord joins the loop ends to the centerpiece without closing the ring", () => {
+  const markup = renderRosaryMap("crucifix", []);
+  const cord = markup.match(/<g class="rosary-cord">([\s\S]*?)<\/g>/)[1];
+
+  assert.equal(
+    (cord.match(/<line/g) ?? []).length,
+    54,
+    "an open loop has 54 intra-loop cord segments, not a 55-segment ring",
+  );
+  assert.equal(
+    (cord.match(/<path/g) ?? []).length,
+    3,
+    "two loop-end cords to the centerpiece plus one strand cord",
+  );
 });
 
 test("pointer locations inside letterbox margins are rejected", () => {

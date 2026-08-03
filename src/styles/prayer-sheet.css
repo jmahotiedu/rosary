@@ -44,6 +44,12 @@
   font-weight: 600;
 }
 
+.mystery-card .mystery-scripture {
+  margin: 2px 0 6px;
+  color: var(--wood-dark);
+  letter-spacing: 0.01em;
+}
+
 .mystery-card span {
   color: var(--muted);
   font-size: 0.9rem;

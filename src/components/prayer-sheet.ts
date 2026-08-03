@@ -2,6 +2,15 @@ import type { MysterySetId, PrayerStep } from "../domain/prayer-step";
 import { PRAYERS } from "../data/prayers";
 import { MYSTERIES } from "../data/mysteries";
 
+const MYSTERY_ORDINALS = ["First", "Second", "Third", "Fourth", "Fifth"] as const;
+
+const MYSTERY_SET_NAMES: Readonly<Record<MysterySetId, string>> = {
+  joyful: "Joyful",
+  sorrowful: "Sorrowful",
+  glorious: "Glorious",
+  luminous: "Luminous",
+};
+
 interface PrayerSheetNavigation {
   readonly atStart: boolean;
   readonly atEnd: boolean;
@@ -37,7 +46,7 @@ export function renderPrayerSheet(
     </div>
     ${
       mystery
-        ? `<aside class="mystery-card"><p>${set} mystery ${step.mysteryIndex! + 1}</p><h3>${mystery.name}</h3><span>${mystery.meditation}</span></aside>`
+        ? `<aside class="mystery-card"><p>${MYSTERY_ORDINALS[step.mysteryIndex!]} ${MYSTERY_SET_NAMES[set]} Mystery</p><h3>${mystery.name}</h3><p class="mystery-scripture">${mystery.scripture}</p><span>${mystery.meditation}</span></aside>`
         : ""
     }
     <div class="prayer-list">

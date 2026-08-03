@@ -27,7 +27,7 @@ function visualMarkup(bead: BeadGeometry, active: boolean, complete: boolean): s
   }
 
   if (bead.visualKind === "medallion") {
-    return `<path data-domain-part="centerpiece" class="medallion-visual${classes}" d="M195 410 C213 420 215 438 195 450 C175 438 177 420 195 410 Z" />`;
+    return `<g data-domain-part="centerpiece"><circle class="medallion-bail" cx="195" cy="413" r="4.5" /><circle class="medallion-visual${classes}" cx="195" cy="432" r="13" /><circle class="medallion-inner" cx="195" cy="432" r="7.5" /></g>`;
   }
 
   if (bead.visualKind === "cross") {
@@ -44,11 +44,18 @@ export function renderRosaryMap(currentStepId: string, completed: readonly strin
   const finalPrayersActive = currentStepId === "final-prayers";
 
   const loopCord = loop
+    .slice(0, 54)
     .map((bead, index) => {
-      const next = loop[(index + 1) % loop.length]!;
+      const next = loop[index + 1]!;
       return `<line x1="${bead.x}" y1="${bead.y}" x2="${next.x}" y2="${next.y}" />`;
     })
     .join("");
+
+  // The loop does not close: both ends run down to the centerpiece bail, and
+  // the strand cord runs from the medal to the crucifix.
+  const rightLoopEnd = loop[0]!;
+  const leftLoopEnd = loop[54]!;
+  const cord = `${loopCord}<path d="M${rightLoopEnd.x} ${rightLoopEnd.y} L195 413"/><path d="M${leftLoopEnd.x} ${leftLoopEnd.y} L195 413"/><path d="M195 445 L195 636"/>`;
 
   const visuals = geometry
     .map((bead) => {
@@ -83,7 +90,7 @@ export function renderRosaryMap(currentStepId: string, completed: readonly strin
           <stop offset="100%" stop-color="#3d2418"/>
         </linearGradient>
       </defs>
-      <g class="rosary-cord">${loopCord}<path d="M195 390 L195 410"/><path d="M195 450 L195 636"/></g>
+      <g class="rosary-cord">${cord}</g>
       ${visuals}
     </svg>
     ${targets}
