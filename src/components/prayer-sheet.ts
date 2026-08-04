@@ -1,6 +1,7 @@
-import type { MysterySetId, PrayerStep } from "../domain/prayer-step";
+import type { Mystery, MysterySetId, PrayerStep } from "../domain/prayer-step";
 import { PRAYERS } from "../data/prayers";
 import { MYSTERIES } from "../data/mysteries";
+import { SCRIPTURE_PASSAGES } from "../data/scripture-passages";
 
 const MYSTERY_ORDINALS = ["First", "Second", "Third", "Fourth", "Fifth"] as const;
 
@@ -26,12 +27,21 @@ function renderPrayerParagraphs(text: string): string {
     .join("");
 }
 
+function renderScripturePassage(mystery: Mystery): string {
+  const passage = SCRIPTURE_PASSAGES[mystery.scripture];
+  if (!passage) return "";
+  return `<details class="scripture-passage"><summary>Read the passage — ${mystery.scripture}</summary>${renderPrayerParagraphs(passage)}</details>`;
+}
+
 export function renderPrayerSheet(
   step: PrayerStep,
   set: MysterySetId,
   navigation: PrayerSheetNavigation,
 ): string {
-  const mystery = step.mysteryIndex === undefined ? null : MYSTERIES[set][step.mysteryIndex];
+  const cardMystery = step.mysteryIndex === undefined ? null : MYSTERIES[set][step.mysteryIndex];
+  // Every decade step keeps its mystery's passage one tap away while meditating.
+  const passageMystery =
+    cardMystery ?? (step.decade === undefined ? null : MYSTERIES[set][step.decade - 1]);
   const completedAtEnd = navigation.atEnd && navigation.rosaryComplete;
   const nextLabel = navigation.atEnd
     ? completedAtEnd
@@ -45,10 +55,11 @@ export function renderPrayerSheet(
       <h2>${step.label}</h2>
     </div>
     ${
-      mystery
-        ? `<aside class="mystery-card"><p>${MYSTERY_ORDINALS[step.mysteryIndex!]} ${MYSTERY_SET_NAMES[set]} Mystery</p><h3>${mystery.name}</h3><p class="mystery-scripture">${mystery.scripture}</p><span>${mystery.meditation}</span></aside>`
+      cardMystery
+        ? `<aside class="mystery-card"><p>${MYSTERY_ORDINALS[step.mysteryIndex!]} ${MYSTERY_SET_NAMES[set]} Mystery</p><h3>${cardMystery.name}</h3><p class="mystery-scripture">${cardMystery.scripture}</p><span>${cardMystery.meditation}</span></aside>`
         : ""
     }
+    ${passageMystery ? renderScripturePassage(passageMystery) : ""}
     <div class="prayer-list">
       ${step.prayerIds
         .map((id) => {

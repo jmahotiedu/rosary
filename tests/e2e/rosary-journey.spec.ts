@@ -88,7 +88,7 @@ test("manual Mystery selection applies immediately and resets after reopening", 
   }
   await expect(page.getByText("First Sorrowful Mystery")).toBeVisible();
   await expect(page.getByText("The Agony in the Garden")).toBeVisible();
-  await expect(page.getByText("Matthew 26:36–46")).toBeVisible();
+  await expect(page.getByText("Matthew 26:36–46", { exact: true })).toBeVisible();
 
   await reopenRosary(page);
   await expect(page.getByRole("combobox")).toHaveValue(getMysterySetForDate(new Date()));
@@ -123,17 +123,17 @@ test("opening Hail Mary highlights follow the physical strand toward the centerp
 
   await expect(page.getByRole("heading", { name: "Opening Hail Mary 1 of 3" })).toBeVisible();
   await expect(first).toHaveAttribute("aria-current", "step");
-  await expect(first).toHaveAttribute("style", /--y:560/);
+  await expect(first).toHaveAttribute("style", /--y:568/);
 
   await page.getByRole("button", { name: "Next prayer" }).click();
   await expect(page.getByRole("heading", { name: "Opening Hail Mary 2 of 3" })).toBeVisible();
   await expect(second).toHaveAttribute("aria-current", "step");
-  await expect(second).toHaveAttribute("style", /--y:522/);
+  await expect(second).toHaveAttribute("style", /--y:530/);
 
   await page.getByRole("button", { name: "Next prayer" }).click();
   await expect(page.getByRole("heading", { name: "Opening Hail Mary 3 of 3" })).toBeVisible();
   await expect(third).toHaveAttribute("aria-current", "step");
-  await expect(third).toHaveAttribute("style", /--y:484/);
+  await expect(third).toHaveAttribute("style", /--y:492/);
 
   await page.getByRole("button", { name: "Next prayer" }).click();
   await expect(page.getByRole("heading", { name: "Before the five decades" })).toBeVisible();

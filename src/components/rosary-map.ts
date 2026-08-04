@@ -19,6 +19,34 @@ function targetMarkup(bead: BeadGeometry, active: boolean): string {
   ><span class="sr-only">${label}</span></button>`;
 }
 
+/** Petal grooves carved around the core of an Our Father bead. */
+function carvedGrooves(cx: number, cy: number): string {
+  return Array.from({ length: 8 }, (_, index) => {
+    const angle = ((22.5 + index * 45) * Math.PI) / 180;
+    const x1 = cx + 3.2 * Math.cos(angle);
+    const y1 = cy + 3.2 * Math.sin(angle);
+    const x2 = cx + 6.8 * Math.cos(angle);
+    const y2 = cy + 6.8 * Math.sin(angle);
+    return `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" />`;
+  }).join("");
+}
+
+function fatherMarkup(bead: BeadGeometry, classes: string): string {
+  return `<circle data-domain-part="bead" class="bead-visual bead-visual--father${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" /><g class="bead-ornate" aria-hidden="true">${carvedGrooves(bead.x, bead.y)}<circle class="bead-ornate-ring" cx="${bead.x}" cy="${bead.y}" r="7.6" /><circle class="bead-ornate-core" cx="${bead.x}" cy="${bead.y}" r="2.5" /></g>`;
+}
+
+function medallionMarkup(classes: string): string {
+  const rays = Array.from({ length: 12 }, (_, index) => {
+    const angle = ((index * 30 + 15) * Math.PI) / 180;
+    const x1 = 195 + 4.4 * Math.cos(angle);
+    const y1 = 432 + 4.4 * Math.sin(angle);
+    const x2 = 195 + 8.6 * Math.cos(angle);
+    const y2 = 432 + 8.6 * Math.sin(angle);
+    return `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" />`;
+  }).join("");
+  return `<g data-domain-part="centerpiece"><circle class="medallion-bail" cx="195" cy="413" r="4.5" /><circle class="medallion-visual${classes}" cx="195" cy="432" r="13" /><g class="medallion-relief" aria-hidden="true">${rays}<path class="medallion-figure" d="M195 427.5 V436.5 M191.5 430.5 H198.5" /><circle class="medallion-rim" cx="195" cy="432" r="11" /></g></g>`;
+}
+
 function visualMarkup(bead: BeadGeometry, active: boolean, complete: boolean): string {
   const classes = stateClass(active, complete);
 
@@ -31,14 +59,18 @@ function visualMarkup(bead: BeadGeometry, active: boolean, complete: boolean): s
   }
 
   if (bead.visualKind === "medallion") {
-    return `<g data-domain-part="centerpiece"><circle class="medallion-bail" cx="195" cy="413" r="4.5" /><circle class="medallion-visual${classes}" cx="195" cy="432" r="13" /><circle class="medallion-inner" cx="195" cy="432" r="7.5" /></g>`;
+    return medallionMarkup(classes);
   }
 
   if (bead.visualKind === "cross") {
     return `<path data-domain-part="crucifix" class="cross-visual${classes}" d="M188 636 H202 V651 H222 V664 H202 V710 H188 V664 H168 V651 H188 Z" />`;
   }
 
-  return `<circle data-domain-part="bead" class="bead-visual${bead.large ? " bead-visual--father" : ""}${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" />`;
+  if (bead.large) {
+    return fatherMarkup(bead, classes);
+  }
+
+  return `<circle data-domain-part="bead" class="bead-visual${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" />`;
 }
 
 export function renderRosaryMap(currentStepId: string, completed: readonly string[]): string {
@@ -46,6 +78,19 @@ export function renderRosaryMap(currentStepId: string, completed: readonly strin
   const geometry = createRosaryGeometry();
   const loop = geometry.filter((bead) => bead.onLoop);
   const finalPrayersActive = currentStepId === "final-prayers";
+  const firstFatherActive = currentStepId === "decade-1-our-father";
+
+  // Two steps share physical objects: the large bead at the top of the drop
+  // carries decade 1's Our Father as well as the opening Glory Be, and the
+  // junction medallion carries the final prayers.
+  const isActive = (bead: BeadGeometry): boolean =>
+    currentStepId === bead.stepId ||
+    (bead.stepId === "opening-glory" && firstFatherActive) ||
+    (bead.visualKind === "medallion" && finalPrayersActive);
+  const isComplete = (bead: BeadGeometry): boolean =>
+    done.has(bead.stepId) ||
+    (bead.stepId === "opening-glory" && done.has("decade-1-our-father")) ||
+    (bead.visualKind === "medallion" && done.has("final-prayers"));
 
   const loopCord = loop
     .slice(0, -1)
@@ -62,22 +107,12 @@ export function renderRosaryMap(currentStepId: string, completed: readonly strin
   const cord = `${loopCord}<path d="M${rightLoopEnd.x} ${rightLoopEnd.y} L195 413"/><path d="M${leftLoopEnd.x} ${leftLoopEnd.y} L195 413"/><path d="M195 445 L195 636"/>`;
 
   const visuals = geometry
-    .map((bead) => {
-      const active =
-        currentStepId === bead.stepId || (bead.stepId === "opening-glory" && finalPrayersActive);
-      const complete =
-        done.has(bead.stepId) || (bead.stepId === "opening-glory" && done.has("final-prayers"));
-      return visualMarkup(bead, active, complete);
-    })
+    .map((bead) => visualMarkup(bead, isActive(bead), isComplete(bead)))
     .join("");
 
   const targets = geometry
     .filter((bead) => bead.stepId !== "")
-    .map((bead) => {
-      const active =
-        currentStepId === bead.stepId || (bead.stepId === "opening-glory" && finalPrayersActive);
-      return targetMarkup(bead, active);
-    })
+    .map((bead) => targetMarkup(bead, isActive(bead)))
     .join("");
 
   return `<section class="rosary-stage" data-rosary-stage aria-label="Interactive wooden Rosary">

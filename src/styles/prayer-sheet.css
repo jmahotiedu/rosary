@@ -56,6 +56,57 @@
   line-height: 1.45;
 }
 
+.scripture-passage {
+  margin: 10px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--canvas);
+}
+
+.scripture-passage summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--wood-dark);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.scripture-passage summary::after {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 120ms ease;
+}
+
+.scripture-passage[open] summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.scripture-passage[open] summary::after {
+  transform: rotate(225deg);
+}
+
+.scripture-passage p {
+  margin: 0;
+  padding: 10px 12px;
+  font-family: var(--font-prayer);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.scripture-passage p + p {
+  padding-top: 0;
+}
+
 .prayer {
   border-top: 1px solid var(--border);
   padding: 12px 0;

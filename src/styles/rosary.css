@@ -195,8 +195,13 @@
 .rosary-cord line,
 .rosary-cord path,
 .bead-visual,
+.bead-ornate line,
+.bead-ornate-ring,
 .spacer-visual,
 .medallion-visual,
+.medallion-relief line,
+.medallion-figure,
+.medallion-rim,
 .cross-visual {
   vector-effect: non-scaling-stroke;
 }
@@ -244,10 +249,31 @@
   stroke-width: 2;
 }
 
-.medallion-inner {
+.bead-ornate line,
+.bead-ornate-ring {
+  fill: none;
+  stroke: #d7a575;
+  stroke-width: 0.9;
+  opacity: 0.75;
+}
+
+.bead-ornate-core {
+  fill: #d7a575;
+  opacity: 0.75;
+}
+
+.medallion-relief line,
+.medallion-figure {
+  fill: none;
+  stroke: rgba(215, 165, 117, 0.75);
+  stroke-width: 1;
+}
+
+.medallion-rim {
   fill: none;
   stroke: rgba(215, 165, 117, 0.55);
-  stroke-width: 1.1;
+  stroke-width: 1.4;
+  stroke-dasharray: 2 2.2;
 }
 
 .bead-visual.is-complete,

@@ -125,6 +125,7 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
   const fatherRadius = 11;
   const hailRadius = 7;
   const connectorRadius = 3;
+  const seedRadius = 2;
 
   const plainSpacer = (gapBefore: number): LoopSlot => ({
     stepId: "",
@@ -135,39 +136,17 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
     gapBefore,
   });
 
-  // Each Our Father bead is flanked by trios of small connector beads, like
-  // the spacer beads that separate a decade from its Our Father on a real
-  // rosary. The middle connector of the trio before each Our Father carries
-  // the Glory Be / Fatima Prayer that closes the previous decade.
+  const seed = (gapBefore: number): LoopSlot => ({
+    stepId: "",
+    radius: seedRadius,
+    hitRadius: 6,
+    large: false,
+    visualKind: "spacer",
+    gapBefore,
+  });
+
   const slots: LoopSlot[] = [];
-  for (let decade = 1; decade <= 5; decade += 1) {
-    if (decade > 1) {
-      slots.push(plainSpacer(1.1));
-      slots.push({
-        stepId: `decade-${decade - 1}-close`,
-        radius: connectorRadius,
-        hitRadius: 16,
-        large: false,
-        visualKind: "transition",
-        decade: decade - 1,
-        gapBefore: 0.55,
-      });
-      slots.push(plainSpacer(0.55));
-    }
-
-    slots.push({
-      stepId: `decade-${decade}-our-father`,
-      radius: fatherRadius,
-      hitRadius: 22,
-      large: true,
-      visualKind: "bead",
-      decade,
-      gapBefore: decade === 1 ? 0 : 1,
-    });
-
-    // The trio after the Our Father links it to the decade's first Hail Mary.
-    slots.push(plainSpacer(1), plainSpacer(0.55), plainSpacer(0.55));
-
+  const pushDecade = (decade: number, firstGap: number): void => {
     for (let number = 1; number <= 10; number += 1) {
       slots.push({
         stepId: `decade-${decade}-hail-${number}`,
@@ -177,13 +156,51 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
         visualKind: "bead",
         decade,
         number,
-        gapBefore: number === 1 ? 1.1 : 1,
+        gapBefore: number === 1 ? firstGap : 0.6,
       });
+      if (number < 10) slots.push(seed(0.6));
     }
+  };
+
+  // Decade 1 has no Our Father bead on the loop: the loop carries 4 large
+  // Our Father beads (decades 2–5), and decade 1's Our Father rides the
+  // large bead at the top of the drop — 6 large beads on the whole rosary.
+  pushDecade(1, 0);
+
+  for (let decade = 2; decade <= 5; decade += 1) {
+    // A seed and a connector trio link the previous decade's last Hail Mary
+    // to this Our Father; the middle connector carries the Glory Be /
+    // Fatima Prayer that closes the previous decade. The trio after the Our
+    // Father links it to the decade's first Hail Mary.
+    slots.push(seed(0.6));
+    slots.push(plainSpacer(0.5));
+    slots.push({
+      stepId: `decade-${decade - 1}-close`,
+      radius: connectorRadius,
+      hitRadius: 16,
+      large: false,
+      visualKind: "transition",
+      decade: decade - 1,
+      gapBefore: 0.55,
+    });
+    slots.push(plainSpacer(0.55));
+    slots.push({
+      stepId: `decade-${decade}-our-father`,
+      radius: fatherRadius,
+      hitRadius: 22,
+      large: true,
+      visualKind: "bead",
+      decade,
+      gapBefore: 1,
+    });
+    slots.push(plainSpacer(1), plainSpacer(0.55), plainSpacer(0.55));
+    slots.push(seed(0.5));
+    pushDecade(decade, 0.6);
   }
 
-  // Gaps are weighted rather than uniform: connector beads sit closer to each
-  // other than to the beads they link, so each trio reads as one small group.
+  // Gaps are weighted rather than uniform: connector and seed beads sit
+  // closer to each other than to the beads they link, so each group reads
+  // as one small cluster.
   const totalWeight = slots.reduce((sum, slot) => sum + slot.gapBefore, 0);
   const loop: BeadGeometry[] = [];
   let travelled = 0;
@@ -226,17 +243,17 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
     visualKind: "spacer",
   });
 
-  const firstOurFather = loop[0]!;
-  const lastHailMary = loop[loop.length - 1]!;
+  const rightLoopEnd = loop[0]!;
+  const leftLoopEnd = loop[loop.length - 1]!;
 
   beads.push(
-    cordSpacer(firstOurFather, 13),
-    cordSpacer(firstOurFather, 20),
-    cordSpacer(firstOurFather, 27),
+    cordSpacer(rightLoopEnd, 13),
+    cordSpacer(rightLoopEnd, 20),
+    cordSpacer(rightLoopEnd, 27),
   );
-  beads.push(cordSpacer(lastHailMary, 14));
+  beads.push(cordSpacer(leftLoopEnd, 14));
   beads.push({
-    ...placeOnCord(lastHailMary, 21),
+    ...placeOnCord(leftLoopEnd, 21),
     stepId: "decade-5-close",
     radius: connectorRadius,
     hitRadius: 16,
@@ -244,8 +261,10 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
     visualKind: "transition",
     decade: 5,
   });
-  beads.push(cordSpacer(lastHailMary, 28));
+  beads.push(cordSpacer(leftLoopEnd, 28));
 
+  // The junction medallion is not a prayer bead; the final prayers are
+  // offered at it after the fifth decade.
   beads.push({
     x: 195,
     y: 432,
@@ -253,10 +272,22 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
     hitRadius: 24,
     large: true,
     visualKind: "medallion",
+    stepId: "",
+  });
+
+  // The large bead at the top of the drop carries the opening Glory Be and
+  // decade 1's Our Father (announced before the decade begins).
+  beads.push({
+    x: 195,
+    y: 466,
+    radius: fatherRadius,
+    hitRadius: 22,
+    large: true,
+    visualKind: "bead",
     stepId: "opening-glory",
   });
 
-  const openingHailMaryPositions = [560, 522, 484];
+  const openingHailMaryPositions = [568, 530, 492];
   openingHailMaryPositions.forEach((y, index) => {
     beads.push({
       x: 195,
@@ -289,6 +320,19 @@ export function createRosaryGeometry(): readonly BeadGeometry[] {
     visualKind: "cross",
     stepId: "crucifix",
   });
+
+  // Seed spacers separate the strand beads just like the loop beads.
+  for (const y of [450, 481, 511, 549, 587, 621]) {
+    beads.push({
+      x: 195,
+      y,
+      radius: seedRadius,
+      hitRadius: 6,
+      large: false,
+      visualKind: "spacer",
+      stepId: "",
+    });
+  }
 
   return beads;
 }

@@ -42,6 +42,11 @@ test("touch targets are at least 44px", async () => {
   assert.match(css, /min-height:\s*44px/);
 });
 
+test("the scripture passage dropdown is styled", async () => {
+  const css = await readFile("src/styles/prayer-sheet.css", "utf8");
+  assert.match(css, /\.scripture-passage/);
+});
+
 test("decade-close markers render as connector beads, not cord knots or gold diamonds", async () => {
   const map = await readFile("src/components/rosary-map.ts", "utf8");
   assert.match(map, /data-domain-part="transition"/);
@@ -53,4 +58,14 @@ test("decade-close markers render as connector beads, not cord knots or gold dia
 
   const css = await readFile("src/styles/rosary.css", "utf8");
   assert.match(css, /\.spacer-visual\s*\{[^}]*fill:\s*url\(#gold-spacer\)/);
+});
+
+test("Our Father beads are carved ornate beads and the centerpiece bears a relief", async () => {
+  const map = await readFile("src/components/rosary-map.ts", "utf8");
+  assert.match(map, /bead-ornate/);
+  assert.match(map, /medallion-relief/);
+
+  const css = await readFile("src/styles/rosary.css", "utf8");
+  assert.match(css, /\.bead-ornate/);
+  assert.match(css, /\.medallion-relief/);
 });
