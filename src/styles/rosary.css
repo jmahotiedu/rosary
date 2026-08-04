@@ -195,7 +195,7 @@
 .rosary-cord line,
 .rosary-cord path,
 .bead-visual,
-.knot-visual,
+.spacer-visual,
 .medallion-visual,
 .cross-visual {
   vector-effect: non-scaling-stroke;
@@ -208,22 +208,27 @@
   transition: stroke-width 120ms ease;
 }
 
-.bead-visual--large {
+.bead-visual--father {
+  fill: url(#wood-father);
+  stroke: #2e1a0e;
   stroke-width: 1.6;
 }
 
-.knot-visual {
-  fill: var(--cord);
-  stroke: none;
+.spacer-visual {
+  fill: url(#gold-spacer);
+  stroke: #8a6a2a;
+  stroke-width: 0.8;
 }
 
-.knot-visual.is-complete {
-  fill: var(--complete);
+.spacer-visual.is-complete {
+  stroke: var(--complete);
+  stroke-width: 1.8;
 }
 
-.knot-visual.is-active {
-  stroke: var(--gold);
-  stroke-width: 3;
+.spacer-visual.is-active {
+  stroke: #3d2418;
+  stroke-width: 1.8;
+  filter: drop-shadow(0 0 4px rgb(181 138 58 / 55%));
 }
 
 .medallion-visual,

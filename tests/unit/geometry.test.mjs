@@ -19,14 +19,15 @@ test("empty center taps do not select a random bead", () => {
 
 test("each visual step resolves to itself at its center", () => {
   for (const point of createRosaryGeometry()) {
+    if (point.stepId === "") continue; // connector beads carry no prayer step
     assert.equal(findNearestRosaryStepId(point.x, point.y), point.stepId);
   }
 });
 
 test("crowded loop taps choose the nearest bead instead of DOM order", () => {
-  const loop = createRosaryGeometry().slice(0, 55);
-  const first = loop[0];
-  const second = loop[1];
+  const geometry = createRosaryGeometry();
+  const first = geometry.find((point) => point.stepId === "decade-1-hail-1");
+  const second = geometry.find((point) => point.stepId === "decade-1-hail-2");
   const nearFirstX = first.x * 0.8 + second.x * 0.2;
   const nearFirstY = first.y * 0.8 + second.y * 0.2;
 
@@ -53,6 +54,49 @@ test("the crucifix has no decorative bead layered over it", () => {
 
   assert.equal(crucifix?.visualKind, "cross");
   assert.equal(crucifix?.radius, 0);
+});
+
+test("Our Father beads are large and connector beads are smaller than Hail Mary beads", () => {
+  const geometry = createRosaryGeometry();
+  const fatherBeads = geometry.filter((point) => point.stepId.endsWith("our-father"));
+  const hailBeads = geometry.filter((point) => point.stepId.includes("-hail-"));
+  const connectors = geometry.filter(
+    (point) => point.visualKind === "spacer" || point.visualKind === "transition",
+  );
+
+  assert.equal(fatherBeads.length, 6);
+  assert.equal(hailBeads.length, 53);
+  assert.ok(fatherBeads.every((point) => point.radius > hailBeads[0].radius));
+  assert.ok(connectors.length > 0);
+  assert.ok(connectors.every((point) => point.radius < hailBeads[0].radius));
+});
+
+test("connector beads between decades carry no prayer step of their own", () => {
+  const geometry = createRosaryGeometry();
+  const plainSpacers = geometry.filter((point) => point.stepId === "");
+
+  assert.ok(plainSpacers.length > 0);
+  assert.ok(plainSpacers.every((point) => point.visualKind === "spacer"));
+});
+
+test("each decade-close connector trio behaves as one touch target", () => {
+  const geometry = createRosaryGeometry();
+  for (let decade = 1; decade <= 5; decade += 1) {
+    const close = geometry.find((point) => point.stepId === `decade-${decade}-close`);
+    const neighbors = geometry.filter(
+      (point) =>
+        point.stepId === "" &&
+        Math.hypot(point.x - close.x, point.y - close.y) <= 12,
+    );
+    assert.equal(
+      neighbors.length,
+      2,
+      `decade ${decade} close is flanked by two connector beads`,
+    );
+    for (const neighbor of neighbors) {
+      assert.equal(findNearestRosaryStepId(neighbor.x, neighbor.y), close.stepId);
+    }
+  }
 });
 
 test("viewBox and browser coordinates round-trip through horizontal letterboxing", () => {
@@ -90,7 +134,7 @@ test("viewBox and browser coordinates round-trip through vertical letterboxing",
 });
 
 test("the loop is open: its widest angular gap flanks the centerpiece", () => {
-  const loopCenter = { x: 195, y: 215 };
+  const loopCenter = { x: 195, y: 218 };
   const loop = createRosaryGeometry().filter(
     (point) => point.visualKind === "bead" && point.stepId.startsWith("decade-"),
   );
@@ -145,18 +189,35 @@ test("the strand runs centerpiece to crucifix in physical prayer order", () => {
   assert.ok(y("opening-our-father") < y("crucifix"));
 });
 
-test("every decade-close knot hugs its decade's last Hail Mary bead", () => {
+test("every decade-close connector trio hugs its decade's last Hail Mary bead", () => {
   const geometry = createRosaryGeometry();
   for (let decade = 1; decade <= 5; decade += 1) {
-    const knot = geometry.find((point) => point.stepId === `decade-${decade}-close`);
+    const close = geometry.find((point) => point.stepId === `decade-${decade}-close`);
     const lastBead = geometry.find(
       (point) => point.stepId === `decade-${decade}-hail-10`,
     );
-    const distance = Math.hypot(knot.x - lastBead.x, knot.y - lastBead.y);
+    // Decades 1–4 continue along the loop to the next Our Father bead; decade 5
+    // continues down the cord, which meets the centerpiece at the bail ring
+    // above the medal (where the cord path in the markup ends).
+    const nextObject =
+      decade < 5
+        ? geometry.find((point) => point.stepId === `decade-${decade + 1}-our-father`)
+        : { x: 195, y: 413 };
+
+    const distance = Math.hypot(close.x - lastBead.x, close.y - lastBead.y);
     assert.ok(
-      distance <= 14,
-      `decade ${decade} knot floats ${distance.toFixed(1)}px from its last bead`,
+      distance <= 30,
+      `decade ${decade} close floats ${distance.toFixed(1)}px from its last bead`,
     );
+
+    // The connector sits on the cord running from the decade's last bead onward.
+    const segX = nextObject.x - lastBead.x;
+    const segY = nextObject.y - lastBead.y;
+    const segLength = Math.hypot(segX, segY);
+    const drift =
+      Math.abs(segX * (close.y - lastBead.y) - segY * (close.x - lastBead.x)) /
+      segLength;
+    assert.ok(drift <= 2, `decade ${decade} close drifts ${drift.toFixed(1)}px off the cord`);
   }
 });
 
@@ -166,8 +227,8 @@ test("the cord joins the loop ends to the centerpiece without closing the ring",
 
   assert.equal(
     (cord.match(/<line/g) ?? []).length,
-    54,
-    "an open loop has 54 intra-loop cord segments, not a 55-segment ring",
+    81,
+    "the cord threads all 82 loop objects: 81 segments, no closing ring segment",
   );
   assert.equal(
     (cord.match(/<path/g) ?? []).length,
@@ -187,6 +248,8 @@ test("every Rosary hit center survives a compact mobile SVG round-trip", () => {
   const bounds = { left: 0, top: -180, width: 360, height: 664.6153846154 };
 
   for (const bead of createRosaryGeometry()) {
+    if (bead.stepId === "") continue; // connector beads have no step to resolve
+
     const browserPoint = viewBoxPointToClient(bead.x, bead.y, bounds);
     assert.ok(browserPoint, `Expected browser point for ${bead.stepId}`);
 

@@ -42,14 +42,15 @@ test("touch targets are at least 44px", async () => {
   assert.match(css, /min-height:\s*44px/);
 });
 
-test("decade-close markers render as cord knots, not gold diamonds or mini beads", async () => {
+test("decade-close markers render as connector beads, not cord knots or gold diamonds", async () => {
   const map = await readFile("src/components/rosary-map.ts", "utf8");
   assert.match(map, /data-domain-part="transition"/);
-  assert.match(map, /knot-visual/);
+  assert.match(map, /spacer-visual/);
+  assert.doesNotMatch(map, /knot-visual/);
   assert.doesNotMatch(map, /rotate\(45/);
   assert.doesNotMatch(map, /transition-visual/);
   assert.doesNotMatch(map, /bead-visual--spacer/);
 
   const css = await readFile("src/styles/rosary.css", "utf8");
-  assert.match(css, /\.knot-visual\s*\{\s*fill:\s*var\(--cord\)/);
+  assert.match(css, /\.spacer-visual\s*\{[^}]*fill:\s*url\(#gold-spacer\)/);
 });

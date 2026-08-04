@@ -23,7 +23,11 @@ function visualMarkup(bead: BeadGeometry, active: boolean, complete: boolean): s
   const classes = stateClass(active, complete);
 
   if (bead.visualKind === "transition") {
-    return `<circle data-domain-part="transition" class="knot-visual${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" />`;
+    return `<circle data-domain-part="transition" class="spacer-visual spacer-visual--close${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" />`;
+  }
+
+  if (bead.visualKind === "spacer") {
+    return `<circle data-domain-part="spacer" class="spacer-visual${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" />`;
   }
 
   if (bead.visualKind === "medallion") {
@@ -34,17 +38,17 @@ function visualMarkup(bead: BeadGeometry, active: boolean, complete: boolean): s
     return `<path data-domain-part="crucifix" class="cross-visual${classes}" d="M188 636 H202 V651 H222 V664 H202 V710 H188 V664 H168 V651 H188 Z" />`;
   }
 
-  return `<circle data-domain-part="bead" class="bead-visual${bead.large ? " bead-visual--large" : ""}${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" />`;
+  return `<circle data-domain-part="bead" class="bead-visual${bead.large ? " bead-visual--father" : ""}${classes}" cx="${bead.x}" cy="${bead.y}" r="${bead.radius}" />`;
 }
 
 export function renderRosaryMap(currentStepId: string, completed: readonly string[]): string {
   const done = new Set(completed);
   const geometry = createRosaryGeometry();
-  const loop = geometry.slice(0, 55);
+  const loop = geometry.filter((bead) => bead.onLoop);
   const finalPrayersActive = currentStepId === "final-prayers";
 
   const loopCord = loop
-    .slice(0, 54)
+    .slice(0, -1)
     .map((bead, index) => {
       const next = loop[index + 1]!;
       return `<line x1="${bead.x}" y1="${bead.y}" x2="${next.x}" y2="${next.y}" />`;
@@ -54,7 +58,7 @@ export function renderRosaryMap(currentStepId: string, completed: readonly strin
   // The loop does not close: both ends run down to the centerpiece bail, and
   // the strand cord runs from the medal to the crucifix.
   const rightLoopEnd = loop[0]!;
-  const leftLoopEnd = loop[54]!;
+  const leftLoopEnd = loop[loop.length - 1]!;
   const cord = `${loopCord}<path d="M${rightLoopEnd.x} ${rightLoopEnd.y} L195 413"/><path d="M${leftLoopEnd.x} ${leftLoopEnd.y} L195 413"/><path d="M195 445 L195 636"/>`;
 
   const visuals = geometry
@@ -68,6 +72,7 @@ export function renderRosaryMap(currentStepId: string, completed: readonly strin
     .join("");
 
   const targets = geometry
+    .filter((bead) => bead.stepId !== "")
     .map((bead) => {
       const active =
         currentStepId === bead.stepId || (bead.stepId === "opening-glory" && finalPrayersActive);
@@ -83,6 +88,18 @@ export function renderRosaryMap(currentStepId: string, completed: readonly strin
           <stop offset="32%" stop-color="#b77b49"/>
           <stop offset="70%" stop-color="#8b572f"/>
           <stop offset="100%" stop-color="#5a341f"/>
+        </radialGradient>
+        <radialGradient id="wood-father" cx="34%" cy="28%" r="72%">
+          <stop offset="0%" stop-color="#9c6034"/>
+          <stop offset="35%" stop-color="#6b3d21"/>
+          <stop offset="75%" stop-color="#452515"/>
+          <stop offset="100%" stop-color="#2b190d"/>
+        </radialGradient>
+        <radialGradient id="gold-spacer" cx="34%" cy="28%" r="72%">
+          <stop offset="0%" stop-color="#f6e2a8"/>
+          <stop offset="35%" stop-color="#ddb95f"/>
+          <stop offset="75%" stop-color="#b3872f"/>
+          <stop offset="100%" stop-color="#7d5a1d"/>
         </radialGradient>
         <linearGradient id="wood-dark" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stop-color="#8a5532"/>
